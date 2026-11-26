@@ -74,6 +74,7 @@ button.x{background:transparent;color:var(--mute);padding:6px 10px;min-height:36
 
 nav a svg{display:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}nav a .s{display:none}
 .mcards{display:none}
+.blist{list-style:none;padding:0}.linkish{color:var(--acc);text-align:left;font-weight:600;white-space:normal}
 @media(max-width:700px){
   body{font-size:15px}
   .wrap{padding:0 16px calc(84px + env(safe-area-inset-bottom))}
@@ -424,7 +425,7 @@ function render() {
   if (r === 'tableau') drawHisto();
 }
 
-let ro = null;
+let ro = null, selBrief = 0;
 function drawHisto() {
   const box = $('#histo'); if (!box) return;
   const pts = valueHistory(cfg.assets, txs, prices);
@@ -580,12 +581,12 @@ function vPf() {
 
 const link = (u, t) => /^https:\/\//.test(String(u || '')) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t || 'source')}</a>` : '';
 function vVeille() {
-  if (!briefs.length) return `<h2>Veille</h2><p class="empty">Le premier brief arrivera dimanche soir. Il résumera ce qui touche tes positions, les opérations en cours (OPA, IPO, fusions), le contexte mondial et l’agenda de la semaine.</p>`;
-  const sel = briefs[0];
+  if (!briefs.length) return `<h2>Veille</h2><p class="empty">Ton premier brief arrive ce soir vers 19 h 45, puis chaque soir : conseils du jour, marchés, IPO, tes positions, monde et géopolitique, agenda.</p>`;
+  const sel = briefs[Math.min(selBrief, briefs.length - 1)] || briefs[0];
   const imp = n => n >= 3 ? '<b class="neg">Important</b> · ' : '';
   const secs = (Array.isArray(sel.sections) ? sel.sections : []).map(sc => `<h3>${esc(sc.title)}</h3>${(Array.isArray(sc.items) && sc.items.length) ? '<ul>' + sc.items.map(it => `<li style="margin-bottom:8px">${imp(Number(it.importance))}${esc(it.text)} ${link(it.url, it.source)}</li>`).join('') + '</ul>' : '<p class="note">Rien à signaler.</p>'}`).join('');
-  const older = briefs.slice(1, 12).map(b => `<li>${esc(b.date)} · ${esc(b.title)}</li>`).join('');
-  return `<h2>${esc(sel.title || 'Brief de la semaine')}</h2><p class="sub">Brief du ${esc(sel.date)}${sel.pricesUpdated ? ' · cours mis à jour pour ' + esc(sel.pricesUpdated) + ' actif(s)' : ''}.</p>${secs}${older ? `<h3>Briefs précédents</h3><ul class="note">${older}</ul>` : ''}<p class="note">Synthèse automatique de sources publiques, à vérifier avant toute décision.</p>`;
+  const older = briefs.map((b, i) => b === sel ? '' : `<li><button type="button" class="x linkish" data-brief="${i}">${esc(b.date)} · ${esc(b.title)}</button></li>`).join('');
+  return `<h2>${esc(sel.title || 'Brief de la semaine')}</h2><p class="sub">Brief du ${esc(sel.date)}${sel.pricesUpdated ? ' · cours mis à jour pour ' + esc(sel.pricesUpdated) + ' actif(s)' : ''}.</p>${secs}${older ? `<h3>Autres briefs</h3><ul class="note blist">${older}</ul>` : ''}<p class="note">Synthèse automatique de sources publiques, à vérifier avant toute décision.</p>`;
 }
 
 const US_IN_WORLD = 0.72; // part approximative des États-Unis dans le MSCI World (janv. 2026)
@@ -879,6 +880,7 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.id === 'askadv') { askAdvice(); return; }
   if (b.id === 'stopask') { askCtl?.abort(); return; }
+  if (b.dataset.brief != null) { selBrief = Number(b.dataset.brief); render(); window.scrollTo(0, 0); return; }
   if (b.id === 'logout' && sbClient) { await sbClient.auth.signOut(); location.reload(); return; }
   if (b.dataset.preset && proj) { proj.rate = Number(b.dataset.preset); const i = document.querySelector('[data-pk="rate"]'); if (i) i.value = proj.rate; $('#v-rate').textContent = pct(proj.rate); try { const { startAuto, ...keep } = proj; if (startAuto) delete keep.start; localStorage.setItem('proj', JSON.stringify(keep)); } catch { } drawProj(); return; }
   if (b.dataset.forget != null) { memo.splice(Number(b.dataset.forget), 1); saveMemo(); render(); return; }
@@ -916,7 +918,7 @@ render();
   db.collection('questions').orderBy('at', 'desc').limit(30).onSnapshot(s => { questions = s.docs.map(x => x.data()); if (route() === 'conseiller' && !asking) render(); }, () => {});
   db.collection('alerts').orderBy('date', 'desc').limit(20).onSnapshot(s => { alerts = s.docs.map(x => ({ ...x.data(), id: x.id })); if (['conseiller', 'tableau'].includes(route()) && !asking) render(); }, () => {});
   db.collection('advice').orderBy('date', 'desc').limit(6).onSnapshot(s => { if (asking) return; advice = s.docs.map(x => x.data()); if (route() === 'conseiller') render(); }, () => {});
-  db.collection('briefs').orderBy('date', 'desc').limit(12).onSnapshot(s => { briefs = s.docs.map(x => x.data()); if (route() === 'veille') render(); }, () => {});
+  db.collection('briefs').orderBy('date', 'desc').limit(30).onSnapshot(s => { briefs = s.docs.map(x => x.data()); if (route() === 'veille') render(); }, () => {});
   db.collection('tx').onSnapshot(s => { txs = s.docs.map(x => ({ ...x.data(), id: x.id })); gotTx = true; done(); }, err => { clearTimeout(timer); setStatus('Erreur : ' + err.code); });
 })();
 }
