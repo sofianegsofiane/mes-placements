@@ -92,6 +92,7 @@ button.x{background:transparent;color:var(--mute);padding:6px 10px;min-height:36
   </nav>
   <span id="status">Chargement…</span>
 </header>
+<p class="warn" id="legacy" hidden>Ton appli a déménagé : tes données sont maintenant sur <a href="https://sofianegsofiane.github.io/mes-placements/" target="_blank" rel="noopener">sofianegsofiane.github.io/mes-placements</a>. Cette version dans Claude n’est plus mise à jour.</p>
 <main id="view"></main>
 </div>
 <script>
@@ -341,6 +342,7 @@ function loginScreen() {
 }
 
 const $ = s => document.querySelector(s);
+if (!STANDALONE) { const lg = document.getElementById('legacy'); if (lg) lg.hidden = false; }
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const eur = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
 const fe = x => eur.format(Number(x) || 0);
