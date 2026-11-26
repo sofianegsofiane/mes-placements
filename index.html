@@ -19,7 +19,7 @@
    PICTURE: l'outil lui-même ; barres réel vs cible
    COLOUR and TYPE: blanc, encre #101418, un seul aplat jaune #ffd84a derrière le chiffre clé ; Manrope
    LAYOUT: onglets en haut, chiffre clé puis tableaux, une colonne sur mobile */
-:root{color-scheme:light dark;--bg:light-dark(#ffffff,#101418);--ink:light-dark(#101418,#eef1f4);--mute:light-dark(#5b6672,#9aa5b1);--line:light-dark(#e3e7eb,#26303a);--panel:light-dark(#f5f7f9,#161d24);--y:#ffd84a;--good:light-dark(#137a3f,#4cc27f);--bad:light-dark(#b3261e,#ff7b72);--acc:light-dark(#2e5d8a,#7fb0e0)}
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#101418);--ink:light-dark(#101418,#eef1f4);--mute:light-dark(#5b6672,#9aa5b1);--line:light-dark(#e3e7eb,#26303a);--panel:light-dark(#f5f7f9,#161d24);--y:#ffd84a;--good:light-dark(#137a3f,#4cc27f);--bad:light-dark(#b3261e,#ff7b72);--acc:light-dark(#2e5d8a,#7fb0e0);--liv:light-dark(#c46a1b,#f0a35e)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Manrope,system-ui,sans-serif;overflow-x:clip}
@@ -235,6 +235,18 @@ function diffCapture(assets, txs, account, lines, date) {
 }
 
 // Projection : versements mensuels, rendement annuel composé mensuellement
+// Livret A : versements jusqu'au plafond, le surplus reste non rémunéré
+function projectLivret({ start, monthly, years, rate, growth = 0, cap = 22950 }) {
+  const rm = Math.pow(1 + rate / 100, 1 / 12) - 1, pts = [];
+  let liv = Math.min(start, cap), cash = Math.max(0, start - cap), paid = start, m = monthly;
+  pts.push({ y: 0, value: liv + cash, paid });
+  for (let y = 1; y <= years; y++) {
+    for (let k = 0; k < 12; k++) { liv *= 1 + rm; const room = Math.max(0, cap - liv), dep = Math.min(m, room); liv += dep; cash += m - dep; paid += m; }
+    pts.push({ y, value: liv + cash, paid });
+    m *= 1 + growth / 100;
+  }
+  return pts;
+}
 function project({ start, monthly, years, rate, growth = 0 }) {
   const rm = Math.pow(1 + rate / 100, 1 / 12) - 1, pts = [{ y: 0, value: start, paid: start }];
   let v = start, paid = start, m = monthly;
@@ -399,6 +411,22 @@ function drawHisto() {
   box.insertAdjacentHTML('afterend', '');
 }
 
+const txAmount = t => (Number(t.qty) || 0) * (Number(t.price) || 0) + (Number(t.fees) || 0);
+const accOf = id => cfg.assets.find(a => a.id === id)?.account || '';
+function accInvested(acc) { return txs.filter(t => t.side !== 'vente' && accOf(t.assetId) === acc).reduce((s, t) => s + txAmount(t), 0); }
+function monthlyHistory() {
+  const m = {};
+  for (const t of txs) {
+    const k = String(t.date || '').slice(0, 7); if (!k) continue;
+    const r = m[k] || (m[k] = { PEA: 0, CTO: 0 });
+    const acc = accOf(t.assetId) || 'PEA', v = txAmount(t) * (t.side === 'vente' ? -1 : 1);
+    r[acc] = (r[acc] || 0) + v;
+  }
+  let cum = 0;
+  return Object.keys(m).sort().map(k => { const r = m[k]; cum += r.PEA + r.CTO; return { month: k, ...r, total: r.PEA + r.CTO, cum }; }).reverse();
+}
+const monthName = k => { const [y, mo] = k.split('-'); return ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'].at(Number(mo) - 1) + ' ' + y; };
+
 function stats() {
   const h = holdings(cfg.assets, txs);
   const rows = cfg.assets.map(a => { const x = h[a.id]; const value = x.qty * (Number(a.price) || 0); return { a, qty: x.qty, cost: x.cost, value }; });
@@ -422,7 +450,8 @@ function vDash() {
   <div class="kpis"><div class="key"><b>${fe(total)}</b><span>PEA ${fe(by('PEA'))} · CTO ${fe(by('CTO'))}</span></div>
   <div class="kpi"><small>Investi</small><strong>${fe(cost)}</strong></div>
   <div class="kpi"><small>Plus ou moins-value</small><strong class="${pl >= 0 ? 'pos' : 'neg'}">${pl >= 0 ? '+' : ''}${fe(pl)} (${pl >= 0 ? '+' : ''}${pct(plp)})</strong></div>
-  <div class="kpi"><small>Versé sur le PEA</small><strong>${fe(peaInvested(cfg.assets, txs))}</strong></div></div>
+  <div class="kpi"><small>Versé sur le PEA</small><strong>${fe(peaInvested(cfg.assets, txs))}</strong></div>
+  <div class="kpi"><small>Versé sur le CTO</small><strong>${fe(accInvested('CTO'))}</strong></div></div>
   <p class="note">${stale ? 'Cours le plus ancien : ' + esc(stale) + '. ' : ''}Mets les cours à jour dans Portefeuille avant de calculer tes achats.</p>
   <h3>Évolution de la valeur</h3><p class="sub"><span style="color:var(--acc)">━</span> valeur du portefeuille · <span style="color:var(--mute)">┄</span> montant investi</p><div id="histo"></div>
   <h3>Répartition réelle face à la cible</h3><p class="sub">La barre montre le poids actuel, le trait vertical la cible.</p><div class="alloc">${alloc}</div>
@@ -500,12 +529,14 @@ function vPf() {
     <td class="n">${fe(r.value)}</td><td class="n ${pl >= 0 ? 'pos' : 'neg'}">${pl >= 0 ? '+' : ''}${fe(pl)}</td><td class="n">${total > 0 ? pct(r.value / total * 100) : '—'}</td></tr>`; }).join('');
   const opts = cfg.assets.map(a => `<option value="${esc(a.id)}">${esc(a.name)} (${esc(a.account)})</option>`).join('');
   const name = id => cfg.assets.find(a => a.id === id)?.name || 'Actif supprimé';
-  const tl = [...txs].sort((a, b) => (b.date || '').localeCompare(a.date || '')).map(t => `<tr><td>${esc(t.date)}</td><td>${esc(name(t.assetId))}</td><td>${esc(t.side || 'achat')}</td><td class="n">${qf(t.qty)}</td><td class="n">${fe(t.price)}</td><td class="n">${fe(t.fees)}</td><td><button class="x" data-deltx="${esc(t.id)}" aria-label="Supprimer">Supprimer</button></td></tr>`).join('');
+  const tl = [...txs].sort((a, b) => (b.date || '').localeCompare(a.date || '')).map(t => `<tr><td>${esc(t.date)}</td><td>${esc(name(t.assetId))} <small style="color:var(--mute)">${esc(accOf(t.assetId))}</small></td><td>${esc(t.side || 'achat')}</td><td class="n">${qf(t.qty)}</td><td class="n">${fe(t.price)}</td><td class="n">${fe(t.fees)}</td><td class="n"><b>${fe(txAmount(t))}</b></td><td><button class="x" data-deltx="${esc(t.id)}" aria-label="Supprimer">Supprimer</button></td></tr>`).join('');
   return `<h2>Portefeuille</h2>${vImport()}<p class="sub">Les cours de clôture sont mis à jour chaque soir de semaine vers 18 h 15. Tu peux aussi les corriger à la main dans la colonne « Cours ».</p>
   ${cfg.assets.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Actif</th><th>Compte</th><th class="n">Parts</th><th class="n">PRU</th><th class="n">Cours (€)</th><th class="n">Valeur</th><th class="n">+/- value</th><th class="n">Poids</th></tr></thead><tbody>${body}</tbody></table></div>` : '<p class="empty">Aucun actif. Ajoute-les dans les <a href="#reglages">Réglages</a>.</p>'}
+  <h3>Historique des versements</h3>
+  ${txs.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Mois</th><th class="n">PEA</th><th class="n">CTO</th><th class="n">Total du mois</th><th class="n">Cumul investi</th></tr></thead><tbody>${monthlyHistory().map(r => `<tr><td>${esc(monthName(r.month))}</td><td class="n">${r.PEA ? fe(r.PEA) : '—'}</td><td class="n">${r.CTO ? fe(r.CTO) : '—'}</td><td class="n"><b>${fe(r.total)}</b></td><td class="n">${fe(r.cum)}</td></tr>`).join('')}</tbody></table></div><p class="note">Montants frais compris ; une vente compte en négatif.</p>` : ''}
   <h3>Transactions</h3>
   ${cfg.assets.length ? `<form class="form" id="ft"><label>Date<input id="td" type="date" value="${today()}" required></label><label>Actif<select id="ta">${opts}</select></label><label>Sens<select id="ts"><option>achat</option><option>vente</option></select></label><label>Parts<input id="tq" type="number" step="any" min="0" required></label><label>Prix unitaire (€)<input id="tp" type="number" step="any" min="0" required></label><label>Frais (€)<input id="tf" type="number" step="any" min="0" value="0"></label><button>Ajouter</button></form>` : ''}
-  ${txs.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Date</th><th>Actif</th><th>Sens</th><th class="n">Parts</th><th class="n">Prix</th><th class="n">Frais</th><th></th></tr></thead><tbody>${tl}</tbody></table></div>` : '<p class="note">Aucune transaction pour l’instant.</p>'}`;
+  ${txs.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Date</th><th>Actif</th><th>Sens</th><th class="n">Parts</th><th class="n">Prix</th><th class="n">Frais</th><th class="n">Coût total</th><th></th></tr></thead><tbody>${tl}</tbody></table></div>` : '<p class="note">Aucune transaction pour l’instant.</p>'}`;
 }
 
 const link = (u, t) => /^https:\/\//.test(String(u || '')) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t || 'source')}</a>` : '';
@@ -684,7 +715,7 @@ let proj = null;
 function projDefaults() {
   const pea = stats().rows.filter(r => r.a.account === 'PEA').reduce((s, r) => s + r.value, 0);
   let saved = {}; try { saved = JSON.parse(localStorage.getItem('proj') || '{}'); } catch { }
-  return { start: Math.round(pea), monthly: Number(cfg.settings.monthlyBudget) || 150, years: 20, rate: 7, growth: 0, infl: 2, ...saved, startAuto: saved.start == null };
+  return { start: Math.round(pea), monthly: Number(cfg.settings.monthlyBudget) || 150, years: 20, rate: 7, growth: 0, infl: 2, livret: 1.7, ...saved, startAuto: saved.start == null };
 }
 const SL = [
   ['years', 'Durée', 1, 40, 1, v => v + (v > 1 ? ' ans' : ' an')],
@@ -693,6 +724,7 @@ const SL = [
   ['rate', 'Rendement annuel moyen', 0, 12, 0.5, v => pct(v)],
   ['growth', 'Hausse des versements chaque année', 0, 10, 0.5, v => pct(v)],
   ['infl', 'Inflation (pour la valeur en euros d’aujourd’hui)', 0, 5, 0.5, v => pct(v)],
+  ['livret', 'Taux du Livret A (comparaison)', 0, 5, 0.1, v => pct(v)],
 ];
 function vProj() {
   if (!proj) proj = projDefaults();
@@ -700,13 +732,13 @@ function vProj() {
   return `<h2>Prévisionnel</h2><p class="sub">Combien ton PEA pourrait valoir selon ton effort d’épargne. Bouge les curseurs : tout se recalcule.</p>
   <div class="projgrid"><div class="sliders">${sl}<div><span class="note">Hypothèse de rendement :</span><div class="presets"><button type="button" class="ghost" data-preset="5">Prudent 5 %</button><button type="button" class="ghost" data-preset="7.5">MSCI World 7,5 %</button><button type="button" class="ghost" data-preset="8">S&amp;P 500 8 %</button></div></div>
   <p class="note">Repères historiques, dividendes réinvestis, en dollars : MSCI World ≈ 7,5 %/an de fin 2000 à mi-2026 ; S&amp;P 500 ≈ 8,1 %/an de 2000 à 2025, mais quasi nul de 2000 à 2010. Rien ne garantit l’avenir.</p></div>
-  <div><div id="pres" class="kpis"></div><div id="pfig" class="fig"></div><p class="note"><span style="color:var(--acc)">━</span> scénario central · zone : ±3 points de rendement · <span style="color:var(--mute)">┄</span> total versé</p><div id="pmil"></div></div></div>
-  <p class="note">Simulation indicative : rendement lissé, frais des ETF non déduits, fiscalité 2026 (prélèvements sociaux de 18,6 % sur les gains après 5 ans de PEA). Pas un conseil en investissement.</p>`;
+  <div><div id="pres" class="kpis"></div><div id="pfig" class="fig"></div><p class="note"><span style="color:var(--acc)">━</span> bourse (scénario central) · zone : ±3 points · <span style="color:var(--liv)">━</span> Livret A · <span style="color:var(--mute)">┄</span> total versé</p><div id="pmil"></div></div></div>
+  <p class="note">Simulation indicative : rendement lissé, frais des ETF non déduits, fiscalité 2026 (prélèvements sociaux de 18,6 % sur les gains après 5 ans de PEA). Livret A : intérêts exonérés, plafond de 22 950 €, taux révisé deux fois par an. Pas un conseil en investissement.</p>`;
 }
 let pro = null;
 function drawProj() {
   const fig = $('#pfig'); if (!fig || !proj) return;
-  const p = { ...proj }, base = project(p), lo = project({ ...p, rate: Math.max(0, p.rate - 3) }), hi = project({ ...p, rate: p.rate + 3 });
+  const p = { livret: 1.7, ...proj }, liv = projectLivret({ ...p, rate: p.livret }), base = project(p), lo = project({ ...p, rate: Math.max(0, p.rate - 3) }), hi = project({ ...p, rate: p.rate + 3 });
   const end = base.at(-1), gain = end.value - end.paid, od = cfg.settings.peaOpenDate, y0 = new Date().getFullYear();
   const peaAge = od ? (y0 + p.years) - Number(od.slice(0, 4)) : p.years;
   const tax = peaAge >= 5 ? 0.186 : 0.314, net = end.value - Math.max(0, gain) * tax, real = net / Math.pow(1 + p.infl / 100, p.years);
@@ -715,10 +747,13 @@ function drawProj() {
     <div class="kpi"><small>Gains</small><strong class="pos">+${fe0((gain))}</strong></div>
     <div class="kpi"><small>Net après ${peaAge >= 5 ? 'prélèvements sociaux (18,6 %)' : 'flat tax (31,4 %, PEA < 5 ans)'}</small><strong>${fe0((net))}</strong></div>
     <div class="kpi"><small>En euros d’aujourd’hui</small><strong>${fe0((real))}</strong></div>
+    <div class="kpi"><small>Sur un Livret A à ${pct(p.livret)}</small><strong>${fe0(liv.at(-1).value)}</strong></div>
+    <div class="kpi"><small>Écart bourse − Livret A (net)</small><strong class="${net - liv.at(-1).value >= 0 ? 'pos' : 'neg'}">${net - liv.at(-1).value >= 0 ? '+' : ''}${fe0(net - liv.at(-1).value)}</strong></div>
     <div class="kpi"><small>Fourchette (±3 pts)</small><strong>${fe0((lo.at(-1).value))} – ${fe0((hi.at(-1).value))}</strong></div>`;
   const mil = [];
   const first = (pts, t) => pts.find(x => x.value >= t);
   for (const t of [10000, 50000, 100000, 250000, 500000]) { const x = first(base, t); if (x && x.y > 0 && base[0].value < t) mil.push(`${fe0(t)} vers ${y0 + x.y}`); }
+  if (liv.some(x => x.paid > 22950)) mil.push('Livret A plafonné à 22 950 € : au-delà, l’argent n’y rapporte plus rien');
   if (base.some(x => x.paid > 150000)) mil.push('attention : tes versements dépasseraient le plafond PEA de 150 000 €');
   $('#pmil').innerHTML = mil.length ? `<p class="note">Étapes : ${esc(mil.join(' · '))}.</p>` : '';
   fig.innerHTML = '<svg role="img" aria-label="Projection du capital dans le temps"></svg>';
@@ -732,7 +767,7 @@ function drawProj() {
     const ticks = W < 520 ? '' : [0.25, 0.5, 0.75, 1].map(f => { const v = maxV * f / 1.05; return `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="12" fill="var(--mute)">${esc(Math.round(v / 1000).toLocaleString('fr-FR'))} k€</text>`; }).join('');
     const yrs = [0, Math.round(p.years / 2), p.years].map(y => `<text x="${X(y)}" y="${H - 8}" text-anchor="${y === 0 ? 'start' : y === p.years ? 'end' : 'middle'}" font-size="12" fill="var(--mute)">${y0 + y}</text>`).join('');
     const five = od && peaAge >= 5 && (Number(od.slice(0, 4)) + 5 - y0) > 0 && (Number(od.slice(0, 4)) + 5 - y0) < p.years ? (() => { const y = Number(od.slice(0, 4)) + 5 - y0; return `<line x1="${X(y)}" x2="${X(y)}" y1="${T}" y2="${H - B}" stroke="var(--mute)" stroke-dasharray="3 3"/><text x="${X(y) + 4}" y="${T + 12}" font-size="12" fill="var(--mute)">PEA 5 ans</text>`; })() : '';
-    s.innerHTML = `${ticks}<path d="${band}" fill="var(--acc)" opacity="0.12"/>${five}<path d="${path(base, 'paid')}" fill="none" stroke="var(--mute)" stroke-width="1.5" stroke-dasharray="4 4"/><path d="${path(base, 'value')}" fill="none" stroke="var(--acc)" stroke-width="2.5"/>${yrs}`;
+    s.innerHTML = `${ticks}<path d="${band}" fill="var(--acc)" opacity="0.12"/>${five}<path d="${path(base, 'paid')}" fill="none" stroke="var(--mute)" stroke-width="1.5" stroke-dasharray="4 4"/><path d="${path(liv, 'value')}" fill="none" stroke="var(--liv)" stroke-width="2"/><path d="${path(base, 'value')}" fill="none" stroke="var(--acc)" stroke-width="2.5"/>${yrs}`;
   };
   if (pro) pro.disconnect(); pro = new ResizeObserver(draw); pro.observe(s);
 }
