@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mes placements</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -71,6 +71,42 @@ button.x{background:transparent;color:var(--mute);padding:6px 10px;min-height:36
 .imp{background:var(--panel);border-radius:10px;padding:12px 16px;margin:12px 0}.imp summary{font-weight:700;cursor:pointer;min-height:32px}
 .presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.presets button{min-height:36px;padding:6px 10px;font-size:14px}.projgrid{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:24px;align-items:start}.sliders{display:grid;gap:14px}.sl{display:grid;gap:4px;font-size:14px;color:var(--mute)}.sl span{display:flex;justify-content:space-between;gap:8px}.sl b{color:var(--ink);white-space:nowrap}.sl input{padding:0;min-height:32px;border:0;accent-color:var(--acc)}#pfig{min-height:300px;margin-top:8px}
 @media(max-width:760px){.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.presets button{min-height:36px;padding:6px 10px;font-size:14px}.projgrid{grid-template-columns:minmax(0,1fr)}}
+
+nav a svg{display:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}nav a .s{display:none}
+.mcards{display:none}
+@media(max-width:700px){
+  body{font-size:15px}
+  .wrap{padding:0 16px calc(84px + env(safe-area-inset-bottom))}
+  header{padding:calc(10px + env(safe-area-inset-top)) 0 8px;flex-wrap:nowrap;align-items:center}
+  h1{font-size:18px}
+  #status{font-size:12px;text-align:right}
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0;background:var(--bg);border-top:1px solid var(--line);padding:4px 2px calc(4px + env(safe-area-inset-bottom))}
+  nav a{flex-direction:column;justify-content:center;gap:2px;padding:6px 0;min-height:52px;border-radius:10px;font-size:10px;font-weight:600}
+  nav a svg{display:block}nav a .l{display:none}nav a .s{display:block;white-space:nowrap}
+  nav a[aria-current=page]{background:none;color:var(--acc)}
+  h2{font-size:26px;margin:20px 0 6px}
+  h3{font-size:16px;margin:22px 0 8px}
+  p.sub{font-size:14px;margin-bottom:12px}
+  .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch}.kpi small{line-height:1.3;margin-bottom:2px}
+  .arow .v{white-space:nowrap;font-size:13px}
+  .kpis .key{grid-column:1/-1}
+  .key{display:block}.key b{font-size:40px}
+  .kpi{background:var(--panel);border-radius:10px;padding:10px 12px}.kpi strong{font-size:17px;white-space:normal}
+  .dtable{display:none}
+  .mcards{display:grid;gap:8px}
+  .mc{background:var(--panel);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center}
+  .mc .t{font-weight:700;font-size:15px;line-height:1.3}.mc .v{font-weight:800;font-size:16px;text-align:right;white-space:nowrap}
+  .mc .d{color:var(--mute);font-size:13px}.mc .r{font-size:13px;text-align:right;white-space:nowrap}
+  .mc input.sm{width:6.5em;min-height:36px;padding:4px 8px;font-size:15px}
+  .mc .x{min-height:32px;padding:4px 0;justify-self:end}
+  .projgrid{display:flex;flex-direction:column}.projgrid>div:last-child{order:-1}
+  #pfig{min-height:240px}
+  .ask{position:sticky;bottom:calc(70px + env(safe-area-inset-bottom));background:var(--bg);padding:8px 0;z-index:5}
+  .bubble.research .note:first-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .form{padding:12px;grid-template-columns:minmax(0,1fr)}
+  .budget input{width:100%}
+  .arow{grid-template-columns:minmax(0,1fr) auto}
+}
 .ask{display:flex;gap:8px;max-width:80ch}.ask input{flex:1}
 .scroll{overflow-x:auto}
 @media(max-width:600px){h2{font-size:28px}.arow{grid-template-columns:minmax(0,1fr) 7em}.arow .bar{grid-column:1/-1;grid-row:2}table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--mute)}.stack td:empty{display:none}}
@@ -82,13 +118,13 @@ button.x{background:transparent;color:var(--mute);padding:6px 10px;min-height:36
 <header>
   <h1>Mes placements</h1>
   <nav id="nav">
-    <a href="#tableau">Tableau de bord</a>
-    <a href="#conseiller">Agent</a>
-    <a href="#achats">Achats du mois</a>
-    <a href="#portefeuille">Portefeuille</a>
-    <a href="#projection">Prévisionnel</a>
-    <a href="#veille">Veille</a>
-    <a href="#reglages">Réglages</a>
+    <a href="#tableau"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span class="l">Tableau de bord</span><span class="s">Accueil</span></a>
+    <a href="#conseiller"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="l">Agent</span><span class="s">Agent</span></a>
+    <a href="#achats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg><span class="l">Achats du mois</span><span class="s">Achats</span></a>
+    <a href="#portefeuille"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="l">Portefeuille</span><span class="s">Positions</span></a>
+    <a href="#projection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span class="l">Prévisionnel</span><span class="s">Projection</span></a>
+    <a href="#veille"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 10h8M8 14h8M8 18h5"/></svg><span class="l">Veille</span><span class="s">Veille</span></a>
+    <a href="#reglages"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span class="l">Réglages</span><span class="s">Réglages</span></a>
   </nav>
   <span id="status">Chargement…</span>
 </header>
@@ -531,12 +567,15 @@ function vPf() {
   const name = id => cfg.assets.find(a => a.id === id)?.name || 'Actif supprimé';
   const tl = [...txs].sort((a, b) => (b.date || '').localeCompare(a.date || '')).map(t => `<tr><td>${esc(t.date)}</td><td>${esc(name(t.assetId))} <small style="color:var(--mute)">${esc(accOf(t.assetId))}</small></td><td>${esc(t.side || 'achat')}</td><td class="n">${qf(t.qty)}</td><td class="n">${fe(t.price)}</td><td class="n">${fe(t.fees)}</td><td class="n"><b>${fe(txAmount(t))}</b></td><td><button class="x" data-deltx="${esc(t.id)}" aria-label="Supprimer">Supprimer</button></td></tr>`).join('');
   return `<h2>Portefeuille</h2>${vImport()}<p class="sub">Les cours de clôture sont mis à jour chaque soir de semaine vers 18 h 15. Tu peux aussi les corriger à la main dans la colonne « Cours ».</p>
-  ${cfg.assets.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Actif</th><th>Compte</th><th class="n">Parts</th><th class="n">PRU</th><th class="n">Cours (€)</th><th class="n">Valeur</th><th class="n">+/- value</th><th class="n">Poids</th></tr></thead><tbody>${body}</tbody></table></div>` : '<p class="empty">Aucun actif. Ajoute-les dans les <a href="#reglages">Réglages</a>.</p>'}
+  ${cfg.assets.length ? `<div class="mcards">${rows.map(r => { const pl = r.value - r.cost; return `<div class="mc"><span class="t">${esc(r.a.name)}</span><span class="v">${fe(r.value)}</span><span class="d">${esc(r.a.account)} · ${qf(r.qty)} part${r.qty > 1 ? 's' : ''} · PRU ${r.qty > 0 ? fe(r.cost / r.qty) : '—'}</span><span class="r ${pl >= 0 ? 'pos' : 'neg'}">${pl >= 0 ? '+' : ''}${fe(pl)}</span><span class="d">Cours (€) · poids ${total > 0 ? pct(r.value / total * 100) : '—'}</span><input class="sm" data-price="${esc(r.a.id)}" type="number" step="any" min="0" value="${esc(r.a.price ?? '')}" aria-label="Cours de ${esc(r.a.name)}"></div>`; }).join('')}</div>` : ''}
+  ${cfg.assets.length ? `<div class="scroll dtable"><table class="stack"><thead><tr><th>Actif</th><th>Compte</th><th class="n">Parts</th><th class="n">PRU</th><th class="n">Cours (€)</th><th class="n">Valeur</th><th class="n">+/- value</th><th class="n">Poids</th></tr></thead><tbody>${body}</tbody></table></div>` : '<p class="empty">Aucun actif. Ajoute-les dans les <a href="#reglages">Réglages</a>.</p>'}
   <h3>Historique des versements</h3>
-  ${txs.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Mois</th><th class="n">PEA</th><th class="n">CTO</th><th class="n">Total du mois</th><th class="n">Cumul investi</th></tr></thead><tbody>${monthlyHistory().map(r => `<tr><td>${esc(monthName(r.month))}</td><td class="n">${r.PEA ? fe(r.PEA) : '—'}</td><td class="n">${r.CTO ? fe(r.CTO) : '—'}</td><td class="n"><b>${fe(r.total)}</b></td><td class="n">${fe(r.cum)}</td></tr>`).join('')}</tbody></table></div><p class="note">Montants frais compris ; une vente compte en négatif.</p>` : ''}
+  ${txs.length ? `<div class="mcards">${monthlyHistory().map(r => `<div class="mc"><span class="t">${esc(monthName(r.month))}</span><span class="v">${fe(r.total)}</span><span class="d">PEA ${fe(r.PEA)} · CTO ${fe(r.CTO)}</span><span class="r">cumul ${fe(r.cum)}</span></div>`).join('')}</div>` : ''}
+  ${txs.length ? `<div class="scroll dtable"><table class="stack"><thead><tr><th>Mois</th><th class="n">PEA</th><th class="n">CTO</th><th class="n">Total du mois</th><th class="n">Cumul investi</th></tr></thead><tbody>${monthlyHistory().map(r => `<tr><td>${esc(monthName(r.month))}</td><td class="n">${r.PEA ? fe(r.PEA) : '—'}</td><td class="n">${r.CTO ? fe(r.CTO) : '—'}</td><td class="n"><b>${fe(r.total)}</b></td><td class="n">${fe(r.cum)}</td></tr>`).join('')}</tbody></table></div><p class="note">Montants frais compris ; une vente compte en négatif.</p>` : ''}
   <h3>Transactions</h3>
   ${cfg.assets.length ? `<form class="form" id="ft"><label>Date<input id="td" type="date" value="${today()}" required></label><label>Actif<select id="ta">${opts}</select></label><label>Sens<select id="ts"><option>achat</option><option>vente</option></select></label><label>Parts<input id="tq" type="number" step="any" min="0" required></label><label>Prix unitaire (€)<input id="tp" type="number" step="any" min="0" required></label><label>Frais (€)<input id="tf" type="number" step="any" min="0" value="0"></label><button>Ajouter</button></form>` : ''}
-  ${txs.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Date</th><th>Actif</th><th>Sens</th><th class="n">Parts</th><th class="n">Prix</th><th class="n">Frais</th><th class="n">Coût total</th><th></th></tr></thead><tbody>${tl}</tbody></table></div>` : '<p class="note">Aucune transaction pour l’instant.</p>'}`;
+  ${txs.length ? `<div class="mcards">${[...txs].sort((a, b) => (b.date || '').localeCompare(a.date || '')).map(t => `<div class="mc"><span class="t">${esc(name(t.assetId))}</span><span class="v">${t.side === 'vente' ? '−' : ''}${fe(txAmount(t))}</span><span class="d">${esc(t.date)} · ${esc(accOf(t.assetId))} · ${esc(t.side || 'achat')} ${qf(t.qty)} × ${fe(t.price)}</span><button class="x" data-deltx="${esc(t.id)}" aria-label="Supprimer">Supprimer</button></div>`).join('')}</div>` : ''}
+  ${txs.length ? `<div class="scroll dtable"><table class="stack"><thead><tr><th>Date</th><th>Actif</th><th>Sens</th><th class="n">Parts</th><th class="n">Prix</th><th class="n">Frais</th><th class="n">Coût total</th><th></th></tr></thead><tbody>${tl}</tbody></table></div>` : '<p class="note">Aucune transaction pour l’instant.</p>'}`;
 }
 
 const link = (u, t) => /^https:\/\//.test(String(u || '')) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t || 'source')}</a>` : '';
@@ -702,7 +741,7 @@ function vAdv() {
   ${al ? `<h3>Alertes</h3><ul class="dgl">${al}</ul>` : ''}
   ${sample || STANDALONE ? `<div class="chat">${bubbles || '<p class="note">Pose ta première question : objectif, prime à placer, IPO, doute sur la stratégie…</p>'}</div>
   ${pend.length ? `<p class="note">${pend.length} recherche(s) web en cours…</p>` : ''}
-  <form id="fq" class="ask"><input id="q" placeholder="Ex. : je touche une prime de 500 €, je la mets où ?" autocomplete="off"${asking ? ' disabled' : ''}>${asking ? '<button type="button" class="ghost" id="stopask">Arrêter</button>' : '<button>Envoyer</button>'}</form>` : '<p class="warn">L’agent ne peut pas répondre ici. Ouvre l’appli depuis l’app Claude ou depuis claude.ai (onglet Artifacts ou lien épinglé), pas depuis un raccourci Safari ni un autre navigateur, puis autorise l’accès à Claude quand c’est demandé.</p>'}
+  <form id="fq" class="ask"><input id="q" placeholder="Pose ta question à ton agent…" autocomplete="off"${asking ? ' disabled' : ''}>${asking ? '<button type="button" class="ghost" id="stopask">Arrêter</button>' : '<button>Envoyer</button>'}</form>` : '<p class="warn">L’agent ne peut pas répondre ici. Ouvre l’appli depuis l’app Claude ou depuis claude.ai (onglet Artifacts ou lien épinglé), pas depuis un raccourci Safari ni un autre navigateur, puis autorise l’accès à Claude quand c’est demandé.</p>'}
   <h3>Diagnostic</h3><ul class="dgl">${dg}</ul>
   <h3>Avis du mois</h3>
   ${sample || STANDALONE ? `<p><button type="button" id="askadv"${asking ? ' disabled' : ''}>${asking ? 'Patiente…' : 'Demander l’avis complet'}</button></p>` : ''}
