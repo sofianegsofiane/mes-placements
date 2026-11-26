@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes placements</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Placements">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#101418">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calme, précis, outil de travail personnel
+   IDEA: le relevé mensuel d'un conseiller — un chiffre clé, puis l'ordre d'achat
+   PICTURE: l'outil lui-même ; barres réel vs cible
+   COLOUR and TYPE: blanc, encre #101418, un seul aplat jaune #ffd84a derrière le chiffre clé ; Manrope
+   LAYOUT: onglets en haut, chiffre clé puis tableaux, une colonne sur mobile */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#101418);--ink:light-dark(#101418,#eef1f4);--mute:light-dark(#5b6672,#9aa5b1);--line:light-dark(#e3e7eb,#26303a);--panel:light-dark(#f5f7f9,#161d24);--y:#ffd84a;--good:light-dark(#137a3f,#4cc27f);--bad:light-dark(#b3261e,#ff7b72);--acc:light-dark(#2e5d8a,#7fb0e0)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Manrope,system-ui,sans-serif;overflow-x:clip}
+.wrap{max-width:1100px;margin:0 auto;padding:0 max(4vw,16px) 64px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:baseline;justify-content:space-between;padding:24px 0 8px;border-bottom:1px solid var(--line)}
+h1{font-size:22px;margin:0;font-weight:800}
+nav{display:flex;flex-wrap:wrap;gap:4px}
+nav a{color:var(--mute);text-decoration:none;padding:10px 14px;border-radius:8px;font-weight:600;min-height:44px;display:inline-flex;align-items:center}
+nav a[aria-current=page]{color:var(--ink);background:var(--panel)}
+nav a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+h2{font-size:32px;line-height:1.05;margin:32px 0 8px;text-wrap:balance;font-weight:800}
+h3{font-size:18px;margin:28px 0 8px}
+p.sub{color:var(--mute);margin:0 0 16px;max-width:70ch}
+.key{display:inline-block;background:var(--y);color:#101418;padding:14px 20px;border-radius:6px}
+.key b{display:block;font-size:clamp(34px,6vw,52px);line-height:1.05;font-weight:800;white-space:nowrap}
+.key span{font-size:14px;font-weight:600}
+.kpis{display:flex;flex-wrap:wrap;gap:16px 40px;align-items:flex-end;margin:16px 0 8px}
+.kpi small{display:block;color:var(--mute);font-size:13px}.kpi strong{font-size:22px;white-space:nowrap}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+.alloc{display:grid;gap:14px;margin-top:8px}
+.arow{display:grid;grid-template-columns:minmax(0,12em) minmax(0,1fr) 9em;gap:12px;align-items:center}
+.bar{position:relative;height:14px;background:var(--panel);border-radius:7px}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--acc);border-radius:7px}
+.bar u{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--ink)}
+.arow .v{text-align:right;font-variant-numeric:tabular-nums;font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{font-size:13px;color:var(--mute);font-weight:600;text-align:left;padding:8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+input,select{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-height:44px;width:100%}
+input.sm{width:7.5em;text-align:right}
+button{font:inherit;font-weight:700;border:0;border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer;background:var(--ink);color:var(--bg)}
+a.btn{display:inline-flex;align-items:center;font-weight:700;border-radius:8px;padding:10px 16px;min-height:44px;background:var(--ink);color:var(--bg);text-decoration:none}
+button.ghost{background:transparent;color:var(--mute);border:1px solid var(--line)}
+button.x{background:transparent;color:var(--mute);padding:6px 10px;min-height:36px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;margin:12px 0;padding:16px;background:var(--panel);border-radius:10px}
+.form label{font-size:13px;color:var(--mute);display:grid;gap:4px}
+.budget{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:8px 0 16px}
+.budget label{font-size:13px;color:var(--mute);display:grid;gap:4px}
+.budget input{font-size:28px;font-weight:800;width:8em}
+.note{font-size:14px;color:var(--mute);margin:8px 0}
+.warn{background:var(--panel);border-left:3px solid var(--bad);padding:10px 14px;border-radius:6px;margin:12px 0;font-size:15px}
+.ok{border-left-color:var(--good)}
+.empty{padding:24px;background:var(--panel);border-radius:10px;color:var(--mute)}
+#status{font-size:13px;color:var(--mute)}
+.dgl{list-style:none;padding:0;margin:0;display:grid;gap:8px}.dg{padding:10px 14px;border-radius:8px;background:var(--panel);border-left:3px solid var(--acc);max-width:80ch}.dg.warn{border-left-color:var(--bad)}.dg.ok{border-left-color:var(--good)}
+.adv{background:var(--panel);border-radius:10px;padding:4px 20px 12px;max-width:80ch}.adv h3{font-size:16px;margin:16px 0 4px}
+.chat{display:grid;gap:10px;max-width:80ch;margin-bottom:10px}.bubble{padding:8px 14px;border-radius:12px;background:var(--panel)}.bubble.research{border-left:3px solid var(--acc)}.bubble.user{background:var(--ink);color:var(--bg);justify-self:end;max-width:85%}.bubble p{margin:6px 0}
+.imp{background:var(--panel);border-radius:10px;padding:12px 16px;margin:12px 0}.imp summary{font-weight:700;cursor:pointer;min-height:32px}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.presets button{min-height:36px;padding:6px 10px;font-size:14px}.projgrid{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:24px;align-items:start}.sliders{display:grid;gap:14px}.sl{display:grid;gap:4px;font-size:14px;color:var(--mute)}.sl span{display:flex;justify-content:space-between;gap:8px}.sl b{color:var(--ink);white-space:nowrap}.sl input{padding:0;min-height:32px;border:0;accent-color:var(--acc)}#pfig{min-height:300px;margin-top:8px}
+@media(max-width:760px){.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.presets button{min-height:36px;padding:6px 10px;font-size:14px}.projgrid{grid-template-columns:minmax(0,1fr)}}
+.ask{display:flex;gap:8px;max-width:80ch}.ask input{flex:1}
+.scroll{overflow-x:auto}
+@media(max-width:600px){h2{font-size:28px}.arow{grid-template-columns:minmax(0,1fr) 7em}.arow .bar{grid-column:1/-1;grid-row:2}table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--mute)}.stack td:empty{display:none}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Mes placements</h1>
+  <nav id="nav">
+    <a href="#tableau">Tableau de bord</a>
+    <a href="#conseiller">Agent</a>
+    <a href="#achats">Achats du mois</a>
+    <a href="#portefeuille">Portefeuille</a>
+    <a href="#projection">Prévisionnel</a>
+    <a href="#veille">Veille</a>
+    <a href="#reglages">Réglages</a>
+  </nav>
+  <span id="status">Chargement…</span>
+</header>
+<main id="view"></main>
+</div>
+<script>
+{
+/*LOGIC-START*/
+const round = (x, d) => { const k = 10 ** d; return Math.round(x * k) / k; };
+
+function holdings(assets, txs) {
+  const h = {};
+  for (const a of assets) h[a.id] = { qty: 0, cost: 0 };
+  const sorted = [...txs].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  for (const t of sorted) {
+    const x = h[t.assetId]; if (!x) continue;
+    const q = Number(t.qty) || 0, p = Number(t.price) || 0, f = Number(t.fees) || 0;
+    if (t.side === 'vente') {
+      const avg = x.qty > 0 ? x.cost / x.qty : 0;
+      x.cost -= avg * Math.min(q, x.qty); x.qty -= q;
+    } else { x.qty += q; x.cost += q * p + f; }
+  }
+  return h;
+}
+
+function peaInvested(assets, txs) {
+  const pea = new Set(assets.filter(a => a.account === 'PEA').map(a => a.id));
+  return txs.filter(t => pea.has(t.assetId) && t.side !== 'vente')
+    .reduce((s, t) => s + (Number(t.qty) || 0) * (Number(t.price) || 0) + (Number(t.fees) || 0), 0);
+}
+
+function computePlan(cfg, txs, budget) {
+  const { classes, assets, settings } = cfg;
+  const warnings = [];
+  const h = holdings(assets, txs);
+  const val = a => (h[a.id]?.qty || 0) * (Number(a.price) || 0);
+  const classVal = {}; for (const c of classes) classVal[c.id] = 0;
+  for (const a of assets) if (a.classId in classVal) classVal[a.classId] += val(a);
+  const V = Object.values(classVal).reduce((s, v) => s + v, 0);
+  const B = Math.max(0, Number(budget) || 0);
+  const T = V + B;
+  const sumW = classes.reduce((s, c) => s + (Number(c.target) || 0), 0);
+  if (Math.abs(sumW - 100) > 0.01) warnings.push(`Les poids cibles totalisent ${round(sumW, 2)} % au lieu de 100 %.`);
+  const def = {}; let sumDef = 0;
+  for (const c of classes) { def[c.id] = Math.max(0, (Number(c.target) || 0) / 100 * T - classVal[c.id]); sumDef += def[c.id]; }
+  const alloc = {};
+  for (const c of classes) {
+    alloc[c.id] = sumDef >= B
+      ? (sumDef > 0 ? def[c.id] * B / sumDef : 0)
+      : def[c.id] + (B - sumDef) * (sumW > 0 ? (Number(c.target) || 0) / sumW : 0);
+  }
+  const cap = Number(settings.peaCap) || 150000;
+  let peaUsed = peaInvested(assets, txs);
+  const frac = acc => acc === 'PEA' ? !!settings.fracPEA : !!settings.fracCTO;
+  const minLine = Number(settings.minLine) || 0;
+  let pool = 0; const lines = [];
+  const order = [...classes].sort((a, b) => alloc[b.id] - alloc[a.id]);
+  for (const c of order) {
+    const amt = alloc[c.id];
+    if (amt <= 0.005) continue;
+    const inClass = assets.filter(a => a.classId === c.id && Number(a.price) > 0);
+    if (!inClass.length) { warnings.push(`Aucun actif avec un cours pour « ${c.name} » : ${round(amt, 2)} € reportés sur les autres classes.`); pool += amt; continue; }
+    let asset = inClass.find(a => a.account === 'PEA' && peaUsed + amt <= cap) || inClass.find(a => a.account === 'CTO');
+    if (!asset) { warnings.push(`Plafond PEA atteint et aucun actif CTO pour « ${c.name} » : montant reporté sur les autres classes.`); pool += amt; continue; }
+    const p = Number(asset.price);
+    let qty = 0;
+    if (amt >= minLine) qty = frac(asset.account) ? Math.floor(amt / p * 10000) / 10000 : Math.floor(amt / p);
+    const cost = qty * p;
+    pool += amt - cost;
+    if (asset.account === 'PEA') peaUsed += cost;
+    lines.push({ classId: c.id, className: c.name, assetId: asset.id, assetName: asset.name, account: asset.account, price: p, qty, frac: frac(asset.account) });
+  }
+  // Montant non placé : ouvrir des lignes sur les autres classes plaçables
+  if (pool >= Math.max(minLine, 0.01)) {
+    for (const c of classes) {
+      if (lines.some(l => l.classId === c.id)) continue;
+      const inClass = assets.filter(a => a.classId === c.id && Number(a.price) > 0);
+      const asset = inClass.find(a => a.account === 'PEA' && peaUsed + pool <= cap) || inClass.find(a => a.account === 'CTO');
+      if (asset) lines.push({ classId: c.id, className: c.name, assetId: asset.id, assetName: asset.name, account: asset.account, price: Number(asset.price), qty: 0, frac: frac(asset.account) });
+    }
+  }
+  // Reliquat : parts entières supplémentaires vers les classes les plus en retard
+  const gap = l => (Number(classes.find(c => c.id === l.classId).target) || 0) / 100 * T - classVal[l.classId] - l.qty * l.price;
+  let moved = true;
+  while (moved && pool > 0.005) {
+    moved = false;
+    const cands = lines.filter(l => !l.frac && l.price <= pool + 1e-9).sort((a, b) => gap(b) - gap(a));
+    if (cands.length) { const l = cands[0]; l.qty += 1; pool -= l.price; moved = true; continue; }
+    const fl = lines.filter(l => l.frac).sort((a, b) => gap(b) - gap(a))[0];
+    if (fl) { const add = Math.floor(pool / fl.price * 10000) / 10000; if (add > 0) { fl.qty = round(fl.qty + add, 4); pool -= add * fl.price; moved = true; } }
+  }
+  const used = lines.reduce((s, l) => s + l.qty * l.price, 0);
+  return { lines: lines.filter(l => l.qty > 0), used: round(used, 2), left: round(B - used, 2), V, warnings };
+}
+
+function valueHistory(assets, txs, prices) {
+  const dates = new Set();
+  for (const a of assets) for (const d of Object.keys((prices[a.id] || {}))) dates.add(d);
+  const days = [...dates].sort();
+  const sorted = [...txs].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  return days.map(d => {
+    const h = holdings(assets, sorted.filter(t => (t.date || '') <= d));
+    let value = 0, cost = 0, missing = false;
+    for (const a of assets) {
+      const ph = prices[a.id] || {}; let p = null;
+      for (const k of Object.keys(ph).sort()) { if (k <= d) p = Number(ph[k]); else break; }
+      if ((h[a.id]?.qty || 0) > 0 && !p) missing = true;
+      value += (h[a.id]?.qty || 0) * (p || 0); cost += h[a.id]?.cost || 0;
+    }
+    return { d, value, cost, missing };
+  }).filter(x => x.cost > 0 && !x.missing);
+}
+
+const normName = x => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+function nameScore(a, b) {
+  const STOP = new Set(['amundi', 'ishares', 'bnp', 'paribas', 'easy', 'pea', 'ucits', 'etf', 'acc', 'dist', 'eur', 'usd', 'capitalisation', 'the', 'de', 'la', 'le', 'du', 'fund', 'sa', 'inc', 'plc', 'nv', 'se']);
+  const words = x => normName(x).split(' ').filter(w => w.length > 1 && !STOP.has(w));
+  const A = new Set(words(a)), B = new Set(words(b));
+  if (!A.size || !B.size) return 0; let n = 0; for (const w of A) if (B.has(w)) n++;
+  return n / Math.min(A.size, B.size);
+}
+// lines: [{name, isin, qty, pru, price}] lues sur la capture d'un compte
+function diffCapture(assets, txs, account, lines, date) {
+  const h = holdings(assets, txs), ops = [], used = new Set();
+  for (const l of lines) {
+    const qty = Number(l.qty) || 0, pru = Number(l.pru) || 0, price = Number(l.price) || 0;
+    let best = null, sc = 0;
+    for (const a of assets) {
+      if (a.account !== account || used.has(a.id)) continue;
+      const s = l.isin && a.isin && String(l.isin).toUpperCase() === String(a.isin).toUpperCase() ? 2 : nameScore(l.name, a.name);
+      if (s > sc) { sc = s; best = a; }
+    }
+    if (!best || sc < 0.6) { ops.push({ kind: 'new', name: l.name, isin: l.isin || '', qty, pru, price }); continue; }
+    used.add(best.id);
+    const old = h[best.id] || { qty: 0, cost: 0 }, dq = Math.round((qty - old.qty) * 10000) / 10000;
+    if (dq > 0) ops.push({ kind: 'buy', assetId: best.id, name: best.name, qty: dq, price: Math.round((qty * pru - old.cost) / dq * 10000) / 10000, date });
+    else if (dq < 0) ops.push({ kind: 'sell', assetId: best.id, name: best.name, qty: -dq, price: price || Number(best.price) || 0, date });
+    if (price > 0 && price !== Number(best.price)) ops.push({ kind: 'price', assetId: best.id, name: best.name, price, date });
+  }
+  for (const a of assets) if (a.account === account && !used.has(a.id) && (h[a.id]?.qty || 0) > 0)
+    ops.push({ kind: 'sell', assetId: a.id, name: a.name, qty: h[a.id].qty, price: Number(a.price) || 0, date, missing: true });
+  return ops;
+}
+
+// Projection : versements mensuels, rendement annuel composé mensuellement
+function project({ start, monthly, years, rate, growth = 0 }) {
+  const rm = Math.pow(1 + rate / 100, 1 / 12) - 1, pts = [{ y: 0, value: start, paid: start }];
+  let v = start, paid = start, m = monthly;
+  for (let y = 1; y <= years; y++) {
+    for (let k = 0; k < 12; k++) { v = v * (1 + rm) + m; paid += m; }
+    pts.push({ y, value: v, paid });
+    m *= 1 + growth / 100;
+  }
+  return pts;
+}
+/*LOGIC-END*/
+
+const STANDALONE = typeof window.claude === 'undefined';
+const SB_URL = 'https://jcpsajrkzfmuqnwocbam.supabase.co';
+const SB_KEY = 'sb_publishable_Ss8Tvn8GHhtxj-uTPBYoYg_ElDwAHp-';
+const OWNER_EMAIL = 'sofianedu24@outlook.fr';
+let sbClient = null;
+
+function loadScript(src) { if (window.supabase) return Promise.resolve(); return new Promise((ok, ko) => { const t = document.createElement('script'); t.src = src; t.onload = ok; t.onerror = ko; document.head.appendChild(t); }); }
+const isObj = x => x && typeof x === 'object' && !Array.isArray(x);
+function deepMerge(a, b) { const o = { ...(isObj(a) ? a : {}) }; for (const [k, v] of Object.entries(b)) o[k] = isObj(v) && isObj(o[k]) ? deepMerge(o[k], v) : v; return o; }
+
+function makeDb(sb) {
+  const parent = p => p.split('/').slice(0, -1).join('/');
+  const META = { hasPendingWrites: false, fromCache: false };
+  const err = e => ({ code: 'unavailable', message: e?.message || String(e) });
+  const listeners = new Set();
+  const notify = p => { for (const l of listeners) if (l.match(p)) l.refresh(); };
+  sb.channel('docs-' + Math.random().toString(36).slice(2)).on('postgres_changes', { event: '*', schema: 'public', table: 'docs' }, pl => notify(pl.new?.path || pl.old?.path || '')).subscribe();
+  setInterval(() => { if (!document.hidden) for (const l of listeners) l.refresh(); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) for (const l of listeners) l.refresh(); });
+  const fetchDoc = async p => { const { data, error } = await sb.from('docs').select('data').eq('path', p).maybeSingle(); if (error) throw err(error); return data; };
+  const put = async (p, data) => { const { error } = await sb.from('docs').upsert({ path: p, col: parent(p), id: p.split('/').pop(), data }); if (error) throw err(error); notify(p); };
+  function doc(path) {
+    return {
+      id: path.split('/').pop(), path,
+      async get() { const r = await fetchDoc(path); return { id: this.id, exists: !!r, data: () => r?.data, metadata: META }; },
+      set: data => put(path, data),
+      async update(data) { const r = await fetchDoc(path); if (!r) throw { code: 'invalid_argument', message: 'missing' }; await put(path, deepMerge(r.data, data)); },
+      async delete() { const { error } = await sb.from('docs').delete().eq('path', path); if (error) throw err(error); notify(path); },
+      onSnapshot(next, onErr) {
+        const l = { match: p => p === path, refresh: async () => { try { const r = await fetchDoc(path); next({ id: path.split('/').pop(), exists: !!r, data: () => r?.data, metadata: META }); } catch (e) { onErr && onErr(e); } } };
+        listeners.add(l); l.refresh(); return () => listeners.delete(l);
+      },
+      collection: sub => collection(path + '/' + sub)
+    };
+  }
+  function collection(col, q = { filters: [], order: null, lim: null }) {
+    const run = async () => {
+      let r = sb.from('docs').select('id,data').eq('col', col);
+      for (const [f, op, v] of q.filters) if (op === '==') r = r.eq('data->>' + f, String(v));
+      if (q.order) r = r.order('data->>' + q.order[0], { ascending: q.order[1] !== 'desc' });
+      if (q.lim) r = r.limit(q.lim);
+      const { data, error } = await r; if (error) throw err(error);
+      const docs = data.map(x => ({ id: x.id, exists: true, data: () => x.data, metadata: META }));
+      return { docs, size: docs.length, empty: !docs.length, docChanges: () => [], metadata: META };
+    };
+    return {
+      path: col,
+      where: (f, op, v) => collection(col, { ...q, filters: [...q.filters, [f, op, v]] }),
+      orderBy: (f, d) => collection(col, { ...q, order: [f, d] }),
+      limit: n => collection(col, { ...q, lim: n }),
+      get: run,
+      doc: id => doc(col + '/' + (id || uid())),
+      add: async data => { const d = doc(col + '/' + uid()); await d.set(data); return d; },
+      onSnapshot(next, onErr) {
+        const l = { match: p => parent(p) === col, refresh: async () => { try { next(await run()); } catch (e) { onErr && onErr(e); } } };
+        listeners.add(l); l.refresh(); return () => listeners.delete(l);
+      }
+    };
+  }
+  return { doc, collection };
+}
+
+async function standaloneDb() {
+  try { await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js'); }
+  catch { setStatus('Pas de connexion internet.'); return null; }
+  sbClient = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+  const { data } = await sbClient.auth.getSession();
+  if (!data.session) await loginScreen();
+  return makeDb(sbClient);
+}
+function loginScreen() {
+  return new Promise(resolve => {
+    $('#nav').hidden = true; setStatus('');
+    $('#view').innerHTML = `<h2>Connexion</h2><p class="sub">Appli privée. Première fois : choisis un mot de passe et touche « Créer mon accès ».</p>
+      <form id="flogin" class="form" style="max-width:420px;grid-template-columns:minmax(0,1fr)"><label>E-mail<input id="lem" type="email" autocomplete="username" value="${OWNER_EMAIL}" required></label><label>Mot de passe<input id="lpw" type="password" autocomplete="current-password" minlength="8" required></label><button>Se connecter</button><button type="button" class="ghost" id="lsignup">Créer mon accès</button><p class="note" id="lmsg"></p></form>`;
+    const msg = t => { $('#lmsg').textContent = t; };
+    const done = () => { $('#nav').hidden = false; resolve(); };
+    $('#flogin').addEventListener('submit', async e => {
+      e.preventDefault(); e.stopPropagation(); msg('Connexion…');
+      const { error } = await sbClient.auth.signInWithPassword({ email: $('#lem').value.trim(), password: $('#lpw').value });
+      if (error) msg(/invalid/i.test(error.message) ? 'E-mail ou mot de passe incorrect. Première fois ? Touche « Créer mon accès ».' : 'Erreur : ' + error.message); else done();
+    }, true);
+    $('#lsignup').addEventListener('click', async () => {
+      const email = $('#lem').value.trim(), password = $('#lpw').value;
+      if (password.length < 8) { msg('Choisis un mot de passe d’au moins 8 caractères.'); return; }
+      msg('Création…');
+      const r = await sbClient.auth.signUp({ email, password });
+      if (r.error && !/registered|exists/i.test(r.error.message)) { msg('Erreur : ' + r.error.message); return; }
+      const { error } = await sbClient.auth.signInWithPassword({ email, password });
+      if (error) msg('Accès créé. Si la connexion échoue, réessaie « Se connecter » dans une minute.'); else done();
+    });
+  });
+}
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const eur = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+const fe = x => eur.format(Number(x) || 0);
+const eur0 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const fe0 = x => eur0.format(Number(x) || 0);
+const pct = x => (Number(x) || 0).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %';
+const qf = x => (Number(x) || 0).toLocaleString('fr-FR', { maximumFractionDigits: 4 });
+const today = () => new Date().toISOString().slice(0, 10);
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+const DEFAULT = { classes: [], assets: [], settings: { minLine: 50, peaCap: 150000, fracPEA: false, fracCTO: true, monthlyBudget: 0, peaOpenDate: '', strategy: '' } };
+let askCtl = null, briefs = [], prices = {}, advice = [], chat = [], memo = [], questions = [], alerts = [], chatLoaded = false, asking = false, sample = null, db = null, cfg = structuredClone(DEFAULT), txs = [], ready = false, budget = '', plan = null, saving = Promise.resolve();
+
+const setStatus = t => { $('#status').textContent = t; };
+function saveCfg() {
+  if (!db) return;
+  const body = JSON.parse(JSON.stringify(cfg));
+  saving = saving.then(() => db.doc('pf/config').set(body)).then(() => setStatus('Enregistré'), e => setStatus('Erreur d’enregistrement : ' + (e?.code || '')));
+}
+
+function route() { const r = (location.hash || '#tableau').slice(1); return ['tableau', 'conseiller', 'achats', 'portefeuille', 'projection', 'veille', 'reglages'].includes(r) ? r : 'tableau'; }
+
+function render() {
+  const r = route();
+  for (const a of document.querySelectorAll('#nav a')) { if (a.getAttribute('href') === '#' + r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
+  const v = $('#view');
+  if (!ready) { v.innerHTML = '<p class="empty">Chargement des données…</p>'; return; }
+  if (ro) { ro.disconnect(); ro = null; }
+  v.innerHTML = ({ tableau: vDash, conseiller: vAdv, achats: vBuy, portefeuille: vPf, veille: vVeille, projection: vProj, reglages: vSet })[r]();
+  if (r === 'projection') drawProj();
+  if (r === 'tableau') drawHisto();
+}
+
+let ro = null;
+function drawHisto() {
+  const box = $('#histo'); if (!box) return;
+  const pts = valueHistory(cfg.assets, txs, prices);
+  if (pts.length < 2) { box.innerHTML = '<p class="note">Le graphique apparaîtra après quelques jours de cours enregistrés.</p>'; return; }
+  box.className = 'fig'; box.style.minHeight = '260px';
+  box.innerHTML = '<svg role="img" aria-label="Valeur du portefeuille et montant investi dans le temps"></svg>';
+  const s = box.firstChild;
+  const draw = () => {
+    const W = s.clientWidth, H = s.clientHeight, L = W < 520 ? 8 : 64, R = 12, T = 12, B = 28;
+    const ys = pts.flatMap(p => [p.value, p.cost]); let lo = Math.min(...ys), hi = Math.max(...ys); const pad = (hi - lo) * 0.1 || hi * 0.05 || 1; lo -= pad; hi += pad;
+    const t0 = Date.parse(pts[0].d), t1 = Date.parse(pts.at(-1).d) || t0 + 1;
+    const X = d => L + (Date.parse(d) - t0) / (t1 - t0 || 1) * (W - L - R), Y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+    const line = k => pts.map((p, i) => (i ? 'L' : 'M') + X(p.d).toFixed(1) + ' ' + Y(p[k]).toFixed(1)).join('');
+    const ticks = W < 520 ? '' : [lo + pad, (lo + hi) / 2, hi - pad].map(v => `<text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="12" fill="var(--mute)">${esc(Math.round(v).toLocaleString('fr-FR'))} €</text><line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/>`).join('');
+    const last = pts.at(-1);
+    s.innerHTML = `${ticks}<path d="${line('cost')}" fill="none" stroke="var(--mute)" stroke-width="1.5" stroke-dasharray="4 4"/><path d="${line('value')}" fill="none" stroke="var(--acc)" stroke-width="2.5"/>
+      <text x="${L}" y="${H - 8}" font-size="12" fill="var(--mute)">${esc(pts[0].d)}</text><text x="${W - R}" y="${H - 8}" text-anchor="end" font-size="12" fill="var(--mute)">${esc(last.d)}</text>`;
+  };
+  ro = new ResizeObserver(draw); ro.observe(s);
+  box.insertAdjacentHTML('afterend', '');
+}
+
+function stats() {
+  const h = holdings(cfg.assets, txs);
+  const rows = cfg.assets.map(a => { const x = h[a.id]; const value = x.qty * (Number(a.price) || 0); return { a, qty: x.qty, cost: x.cost, value }; });
+  const total = rows.reduce((s, r) => s + r.value, 0), cost = rows.reduce((s, r) => s + r.cost, 0);
+  return { rows, total, cost };
+}
+
+function vDash() {
+  if (!cfg.classes.length) return `<h2>Bienvenue</h2><p class="empty">Commence par les <a href="#reglages">Réglages</a> : ta répartition cible, puis tes ETF et actions. Ajoute ensuite tes achats passés dans <a href="#portefeuille">Portefeuille</a>.</p>`;
+  const { rows, total, cost } = stats();
+  const pl = total - cost, plp = cost > 0 ? pl / cost * 100 : 0;
+  const by = acc => rows.filter(r => r.a.account === acc).reduce((s, r) => s + r.value, 0);
+  const stale = cfg.assets.filter(a => a.priceDate).map(a => a.priceDate).sort()[0];
+  const alloc = cfg.classes.map(c => {
+    const v = rows.filter(r => r.a.classId === c.id).reduce((s, r) => s + r.value, 0);
+    const p = total > 0 ? v / total * 100 : 0;
+    return `<div class="arow"><span>${esc(c.name)}</span><div class="bar" role="img" aria-label="${esc(c.name)} ${pct(p)} pour une cible de ${pct(c.target)}"><i style="width:${Math.min(100, p)}%"></i><u style="left:calc(${Math.min(100, Number(c.target) || 0)}% - 1px)"></u></div><span class="v">${pct(p)} / ${pct(c.target)}</span></div>`;
+  }).join('');
+  const live = alerts.filter(a => !a.dismissed);
+  return `${live.length ? `<p class="warn"><b>${live.length} alerte(s) de ton agent</b> — ${esc(live[0].title)}. <a href="#conseiller">Voir</a></p>` : ''}<h2>Ton portefeuille vaut</h2>
+  <div class="kpis"><div class="key"><b>${fe(total)}</b><span>PEA ${fe(by('PEA'))} · CTO ${fe(by('CTO'))}</span></div>
+  <div class="kpi"><small>Investi</small><strong>${fe(cost)}</strong></div>
+  <div class="kpi"><small>Plus ou moins-value</small><strong class="${pl >= 0 ? 'pos' : 'neg'}">${pl >= 0 ? '+' : ''}${fe(pl)} (${pl >= 0 ? '+' : ''}${pct(plp)})</strong></div>
+  <div class="kpi"><small>Versé sur le PEA</small><strong>${fe(peaInvested(cfg.assets, txs))}</strong></div></div>
+  <p class="note">${stale ? 'Cours le plus ancien : ' + esc(stale) + '. ' : ''}Mets les cours à jour dans Portefeuille avant de calculer tes achats.</p>
+  <h3>Évolution de la valeur</h3><p class="sub"><span style="color:var(--acc)">━</span> valeur du portefeuille · <span style="color:var(--mute)">┄</span> montant investi</p><div id="histo"></div>
+  <h3>Répartition réelle face à la cible</h3><p class="sub">La barre montre le poids actuel, le trait vertical la cible.</p><div class="alloc">${alloc}</div>
+  <p style="margin-top:24px"><a class="btn" href="#achats">Calculer les achats du mois</a></p>`;
+}
+
+function vBuy() {
+  if (!cfg.classes.length || !cfg.assets.length) return `<h2>Achats du mois</h2><p class="empty">Il faut d’abord une répartition cible et au moins un actif dans les <a href="#reglages">Réglages</a>.</p>`;
+  const lines = plan ? plan.lines.map((l, i) => `<tr><td>${esc(l.className)}</td><td>${esc(l.assetName)}</td><td>${esc(l.account)}</td>
+    <td class="n"><input class="sm" data-pq="${i}" type="number" step="any" min="0" value="${l.qty}" aria-label="Parts"></td>
+    <td class="n"><input class="sm" data-pp="${i}" type="number" step="any" min="0" value="${l.price}" aria-label="Prix"></td>
+    <td class="n">${fe(l.qty * l.price)}</td></tr>`).join('') : '';
+  const warn = plan ? plan.warnings.map(w => `<div class="warn">${esc(w)}</div>`).join('') : '';
+  return `<h2>Achats du mois</h2><p class="sub">Le budget va d’abord aux classes les plus en retard sur leur cible. Rien n’est vendu.</p>
+  <form class="budget" id="fb"><label>Budget du mois (€)<input id="bud" type="number" min="0" step="any" inputmode="decimal" value="${esc(budget || cfg.settings.monthlyBudget || '')}"></label><button>Calculer</button></form>
+  ${warn}
+  ${plan ? (plan.lines.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Classe</th><th>Actif</th><th>Compte</th><th class="n">Parts</th><th class="n">Prix (€)</th><th class="n">Montant</th></tr></thead><tbody>${lines}</tbody></table></div>
+    <div class="kpis"><div class="kpi"><small>À investir</small><strong>${fe(plan.lines.reduce((s, l) => s + l.qty * l.price, 0))}</strong></div><div class="kpi"><small>Reste non investi</small><strong>${fe((Number(budget) || 0) - plan.lines.reduce((s, l) => s + l.qty * l.price, 0))}</strong></div></div>
+    <p class="note">Ajuste les parts et le prix réellement payé après tes ordres, puis enregistre.</p>
+    <form class="form" id="fv"><label>Date d’achat<input id="vd" type="date" value="${today()}"></label><label>Frais par ordre (€)<input id="vf" type="number" step="any" min="0" value="0"></label><button>Enregistrer ces achats</button></form>`
+    : '<p class="empty">Budget trop faible pour acheter une part au cours actuel.</p>') : ''}`;
+}
+
+let imp = { account: 'PEA', busy: false, ops: null, msg: '' };
+function vImport() {
+  if (!sample) return '';
+  const lbl = { buy: 'Achat', sell: 'Vente', price: 'Cours', new: 'Nouvelle ligne' };
+  const cls = cfg.classes.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  const rows = (imp.ops || []).map((o, i) => `<tr><td><input type="checkbox" data-iop="${i}" ${o.off ? '' : 'checked'} aria-label="Appliquer"></td><td>${lbl[o.kind]}${o.missing ? ' (absente de la capture)' : ''}</td><td>${esc(o.name)}${o.kind === 'new' ? `<br><select data-icls="${i}" aria-label="Classe">${cls}</select>` : ''}</td><td class="n">${o.kind === 'price' ? '' : qf(o.qty)}</td><td class="n">${fe(o.kind === 'new' ? o.pru : o.price)}</td></tr>`).join('');
+  return `<details class="imp"${imp.ops || imp.busy ? ' open' : ''}><summary>Mettre à jour depuis une capture d’écran</summary>
+  <p class="note">Capture de la liste de tes positions (nom, quantité, prix de revient, cours). Claude la lit, l’appli compare avec ce qu’elle connaît.</p>
+  <div class="budget"><label>Compte<select id="iacc"><option${imp.account === 'PEA' ? ' selected' : ''}>PEA</option><option${imp.account === 'CTO' ? ' selected' : ''}>CTO</option></select></label><label>Capture<input id="ifile" type="file" accept="image/*" multiple${imp.busy ? ' disabled' : ''}></label></div>
+  ${imp.msg ? `<p class="note">${esc(imp.msg)}</p>` : ''}
+  ${imp.ops ? (imp.ops.length ? `<div class="scroll"><table><thead><tr><th></th><th>Opération</th><th>Actif</th><th class="n">Qté</th><th class="n">Prix</th></tr></thead><tbody>${rows}</tbody></table></div><p class="note">Le prix d’achat est déduit du nouveau prix de revient (frais inclus). Décoche ce qui est faux.</p><p><button type="button" id="iapply">Appliquer</button> <button type="button" class="ghost" id="icancel">Annuler</button></p>` : '<p class="note">Tout est déjà à jour.</p>') : ''}
+  </details>`;
+}
+async function readCapture(files) {
+  if (!sample || !files.length) return;
+  imp.busy = true; imp.ops = null; imp.msg = 'Claude lit la capture…'; render();
+  try {
+    const data = await sample.json(`Voici une ou plusieurs captures d'écran d'une application de courtier (compte ${imp.account}). Extrais chaque ligne de position détenue. Réponds uniquement avec un objet JSON : {"positions":[{"name":"nom du titre tel qu'affiché","isin":"ISIN s'il est visible sinon chaîne vide","qty":nombre de parts ou titres,"pru":prix de revient unitaire en euros (null si absent),"price":cours actuel unitaire en euros (null si absent),"value":montant total de la ligne en euros (null si absent),"gain":plus ou moins-value latente en euros (null si absent)}],"cash":solde espèces en euros ou null}. Nombres au format JSON (point décimal). N'invente rien : si une valeur n'est pas visible, mets null. Si la quantité n'est pas affichée mais que le montant et le cours le sont, mets qty à null.`, { images: [...files] });
+    const pos = Array.isArray(data?.positions) ? data.positions : [];
+    for (const p of pos) {
+      if (!(Number(p.qty) > 0) && Number(p.value) > 0 && Number(p.price) > 0) p.qty = Math.round(p.value / p.price * 10000) / 10000;
+      if (!(Number(p.pru) > 0) && Number(p.value) > 0 && p.gain != null && Number(p.qty) > 0) p.pru = Math.round((p.value - Number(p.gain)) / p.qty * 10000) / 10000;
+    }
+    const ok = pos.filter(p => Number(p.qty) > 0);
+    imp.ops = diffCapture(cfg.assets, txs, imp.account, ok, today());
+    imp.msg = `${ok.length} ligne(s) lue(s)` + (data?.cash != null ? ` · espèces : ${fe(data.cash)}` : '') + (pos.length > ok.length ? ` · ${pos.length - ok.length} ligne(s) sans quantité ignorée(s)` : '') + '.';
+  } catch (e) { imp.msg = e?.code === 'invalid_json' ? 'Capture illisible, essaie une image plus nette.' : sErr(e); }
+  imp.busy = false; render();
+}
+async function applyImport() {
+  const ops = (imp.ops || []).filter(o => !o.off); if (!db) return;
+  for (const o of ops) {
+    if (o.kind === 'new') {
+      const id = uid();
+      cfg.assets.push({ id, name: o.name, isin: o.isin, ticker: '', classId: o.classId || cfg.classes[0]?.id || '', account: imp.account, price: o.price || o.pru, priceDate: today() });
+      await addTx({ date: today(), assetId: id, side: 'achat', qty: o.qty, price: o.pru || o.price, fees: 0 });
+    } else if (o.kind === 'buy' || o.kind === 'sell') {
+      await addTx({ date: o.date, assetId: o.assetId, side: o.kind === 'buy' ? 'achat' : 'vente', qty: o.qty, price: o.price, fees: 0 });
+    } else if (o.kind === 'price') {
+      const a = cfg.assets.find(x => x.id === o.assetId); if (a) { a.price = o.price; a.priceDate = today(); db.doc('prices/' + a.id).set({ h: { ...(prices[a.id] || {}), [today()]: o.price } }).catch(() => {}); }
+    }
+  }
+  saveCfg(); imp = { account: imp.account, busy: false, ops: null, msg: `${ops.length} mise(s) à jour appliquée(s).` }; render();
+}
+
+function vPf() {
+  const { rows, total } = stats();
+  const cls = id => cfg.classes.find(c => c.id === id)?.name || '—';
+  const body = rows.map(r => { const pl = r.value - r.cost; return `<tr><td><b>${esc(r.a.name)}</b><br><small style="color:var(--mute)">${esc(r.a.isin)} · ${esc(cls(r.a.classId))}</small></td><td>${esc(r.a.account)}</td>
+    <td class="n">${qf(r.qty)}</td><td class="n">${r.qty > 0 ? fe(r.cost / r.qty) : '—'}</td>
+    <td class="n"><input class="sm" data-price="${esc(r.a.id)}" type="number" step="any" min="0" value="${esc(r.a.price ?? '')}" aria-label="Cours de ${esc(r.a.name)}"></td>
+    <td class="n">${fe(r.value)}</td><td class="n ${pl >= 0 ? 'pos' : 'neg'}">${pl >= 0 ? '+' : ''}${fe(pl)}</td><td class="n">${total > 0 ? pct(r.value / total * 100) : '—'}</td></tr>`; }).join('');
+  const opts = cfg.assets.map(a => `<option value="${esc(a.id)}">${esc(a.name)} (${esc(a.account)})</option>`).join('');
+  const name = id => cfg.assets.find(a => a.id === id)?.name || 'Actif supprimé';
+  const tl = [...txs].sort((a, b) => (b.date || '').localeCompare(a.date || '')).map(t => `<tr><td>${esc(t.date)}</td><td>${esc(name(t.assetId))}</td><td>${esc(t.side || 'achat')}</td><td class="n">${qf(t.qty)}</td><td class="n">${fe(t.price)}</td><td class="n">${fe(t.fees)}</td><td><button class="x" data-deltx="${esc(t.id)}" aria-label="Supprimer">Supprimer</button></td></tr>`).join('');
+  return `<h2>Portefeuille</h2>${vImport()}<p class="sub">Les cours de clôture sont mis à jour chaque soir de semaine vers 18 h 15. Tu peux aussi les corriger à la main dans la colonne « Cours ».</p>
+  ${cfg.assets.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Actif</th><th>Compte</th><th class="n">Parts</th><th class="n">PRU</th><th class="n">Cours (€)</th><th class="n">Valeur</th><th class="n">+/- value</th><th class="n">Poids</th></tr></thead><tbody>${body}</tbody></table></div>` : '<p class="empty">Aucun actif. Ajoute-les dans les <a href="#reglages">Réglages</a>.</p>'}
+  <h3>Transactions</h3>
+  ${cfg.assets.length ? `<form class="form" id="ft"><label>Date<input id="td" type="date" value="${today()}" required></label><label>Actif<select id="ta">${opts}</select></label><label>Sens<select id="ts"><option>achat</option><option>vente</option></select></label><label>Parts<input id="tq" type="number" step="any" min="0" required></label><label>Prix unitaire (€)<input id="tp" type="number" step="any" min="0" required></label><label>Frais (€)<input id="tf" type="number" step="any" min="0" value="0"></label><button>Ajouter</button></form>` : ''}
+  ${txs.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Date</th><th>Actif</th><th>Sens</th><th class="n">Parts</th><th class="n">Prix</th><th class="n">Frais</th><th></th></tr></thead><tbody>${tl}</tbody></table></div>` : '<p class="note">Aucune transaction pour l’instant.</p>'}`;
+}
+
+const link = (u, t) => /^https:\/\//.test(String(u || '')) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t || 'source')}</a>` : '';
+function vVeille() {
+  if (!briefs.length) return `<h2>Veille</h2><p class="empty">Le premier brief arrivera dimanche soir. Il résumera ce qui touche tes positions, les opérations en cours (OPA, IPO, fusions), le contexte mondial et l’agenda de la semaine.</p>`;
+  const sel = briefs[0];
+  const imp = n => n >= 3 ? '<b class="neg">Important</b> · ' : '';
+  const secs = (Array.isArray(sel.sections) ? sel.sections : []).map(sc => `<h3>${esc(sc.title)}</h3>${(Array.isArray(sc.items) && sc.items.length) ? '<ul>' + sc.items.map(it => `<li style="margin-bottom:8px">${imp(Number(it.importance))}${esc(it.text)} ${link(it.url, it.source)}</li>`).join('') + '</ul>' : '<p class="note">Rien à signaler.</p>'}`).join('');
+  const older = briefs.slice(1, 12).map(b => `<li>${esc(b.date)} · ${esc(b.title)}</li>`).join('');
+  return `<h2>${esc(sel.title || 'Brief de la semaine')}</h2><p class="sub">Brief du ${esc(sel.date)}${sel.pricesUpdated ? ' · cours mis à jour pour ' + esc(sel.pricesUpdated) + ' actif(s)' : ''}.</p>${secs}${older ? `<h3>Briefs précédents</h3><ul class="note">${older}</ul>` : ''}<p class="note">Synthèse automatique de sources publiques, à vérifier avant toute décision.</p>`;
+}
+
+const US_IN_WORLD = 0.72; // part approximative des États-Unis dans le MSCI World (janv. 2026)
+function diagnostics() {
+  const { rows, total } = stats();
+  const out = [];
+  const held = rows.filter(r => r.qty > 0);
+  if (!held.length) return [{ lvl: 'info', t: 'Aucune position : ajoute tes achats dans Portefeuille.' }];
+  // écart à la cible
+  const ctoOnly = c => { const as = cfg.assets.filter(a => a.classId === c.id); return as.length && as.every(a => a.account === 'CTO') && !(Number(c.target) > 0); };
+  const base = rows.filter(r => !ctoOnly(cfg.classes.find(c => c.id === r.a.classId) || {})).reduce((s, r) => s + r.value, 0);
+  for (const c of cfg.classes) {
+    if (ctoOnly(c)) continue;
+    const v = rows.filter(r => r.a.classId === c.id).reduce((s, r) => s + r.value, 0), p = base ? v / base * 100 : 0, d = p - (Number(c.target) || 0);
+    if (Math.abs(d) >= 5) out.push({ lvl: 'warn', t: `${c.name} : ${pct(p)} du portefeuille hors CTO-IPO, pour une cible de ${pct(c.target)} (écart ${d > 0 ? '+' : ''}${pct(d)}). Les prochains achats corrigent l’écart sans rien vendre.` });
+  }
+  // exposition US
+  const isWorld = r => /world|monde/i.test(r.a.name), isUS = r => /s&p|500|nasdaq|\bus\b|usa/i.test(r.a.name);
+  const us = held.reduce((s, r) => s + (isUS(r) ? r.value : isWorld(r) ? r.value * US_IN_WORLD : 0), 0);
+  const pea = held.filter(r => r.a.account === 'PEA').reduce((s, r) => s + r.value, 0);
+  if (pea > 0) out.push({ lvl: 'info', t: `Exposition réelle aux États-Unis sur ton PEA : environ ${pct(us / pea * 100)} (le MSCI World en contient déjà ~72 %).` });
+  // concentration ligne unique
+  for (const r of held) if (!isWorld(r) && !isUS(r) && total && r.value / total > 0.1) out.push({ lvl: 'warn', t: `${r.a.name} pèse ${pct(r.value / total * 100)} du portefeuille : au-delà de 10 % sur une seule action, une mauvaise nouvelle se voit fortement sur l’ensemble.` });
+  // frais
+  const withTer = held.filter(r => Number(r.a.ter) > 0), tv = withTer.reduce((s, r) => s + r.value, 0);
+  if (tv > 0) { const ter = withTer.reduce((s, r) => s + r.value * Number(r.a.ter), 0) / tv; out.push({ lvl: 'info', t: `Frais annuels moyens de tes ETF : ${ter.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} %, soit environ ${fe(tv * ter / 100)} par an.` }); }
+  // régularité
+  const last = txs.filter(t => t.side !== 'vente').map(t => t.date).sort().at(-1);
+  if (last) { const days = Math.round((Date.parse(today()) - Date.parse(last)) / 864e5); out.push({ lvl: days > 35 ? 'warn' : 'ok', t: days > 35 ? `Dernier achat il y a ${days} jours : ton versement mensuel n’a pas été fait.` : `Dernier achat le ${last} : rythme mensuel respecté.` }); }
+  // budget
+  const b = Number(cfg.settings.monthlyBudget) || 0;
+  if (b > 0) { const p = computePlan(cfg, txs, b); out.push({ lvl: 'info', t: 'Prochain versement de ' + fe(b) + ' : ' + (p.lines.map(l => `${qf(l.qty)} × ${l.assetName}`).join(', ') || 'rien à acheter') + '.' }); }
+  else out.push({ lvl: 'info', t: 'Indique ton budget mensuel habituel dans les Réglages pour voir ton prochain achat ici.' });
+  // PEA 5 ans
+  const od = cfg.settings.peaOpenDate;
+  if (od) { const five = new Date(Date.parse(od) + 5 * 365.25 * 864e5).toISOString().slice(0, 10); out.push({ lvl: five <= today() ? 'ok' : 'info', t: five <= today() ? 'Ton PEA a plus de 5 ans : les gains retirés ne paient plus que les prélèvements sociaux.' : `Ton PEA aura 5 ans le ${five} : avant cette date, un retrait clôture le plan.` }); }
+  else out.push({ lvl: 'info', t: 'Indique la date d’ouverture de ton PEA dans les Réglages pour suivre l’échéance fiscale des 5 ans.' });
+  return out;
+}
+
+function context() {
+  const { rows, total } = stats();
+  const b = briefs[0];
+  return JSON.stringify({
+    date: today(),
+    strategie: cfg.settings.strategy || cfg.classes.map(c => `${c.name} : cible ${c.target} %`).join(' ; '),
+    budgetMensuel: Number(cfg.settings.monthlyBudget) || null,
+    ouverturePEA: cfg.settings.peaOpenDate || null,
+    valeurTotale: Math.round(total * 100) / 100,
+    cibles: cfg.classes.map(c => ({ classe: c.name, cible: c.target })),
+    positions: rows.filter(r => r.qty > 0).map(r => ({ nom: r.a.name, isin: r.a.isin, compte: r.a.account, classe: cfg.classes.find(c => c.id === r.a.classId)?.name, quantite: r.qty, prixRevient: r.qty ? Math.round(r.cost / r.qty * 100) / 100 : null, cours: r.a.price, dateCours: r.a.priceDate, valeur: Math.round(r.value * 100) / 100, fraisTER: r.a.ter || null })),
+    diagnostic: diagnostics().map(d => d.t),
+    dernierBrief: b ? { date: b.date, titre: b.title, points: (b.sections || []).flatMap(sc => (sc.items || []).map(it => `[${sc.title}] ${it.text}`)).slice(0, 25) } : null
+  });
+}
+const RULES = `Tu es le conseiller en investissement personnel de Sofiane, un particulier français. Tu réponds en français, de façon directe et concrète, comme un conseiller qui connaît son dossier. Base-toi uniquement sur les données JSON fournies (portefeuille, stratégie, diagnostic, dernier brief de veille) et sur tes connaissances générales ; si une info manque, dis-le. Respecte sa stratégie déclarée : propose des ajustements en expliquant le pour et le contre, sans l'abandonner sans raison. Pas de jargon inutile, pas de promesse de rendement. Rappelle en une ligne à la fin que la décision lui revient.`;
+
+function md(t) {
+  const lines = String(t || '').split('\n'); let html = '', list = false;
+  const inline = x => esc(x).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  for (const l of lines) {
+    const m = l.match(/^\s*[-*•]\s+(.*)/);
+    if (m) { if (!list) { html += '<ul>'; list = true; } html += `<li>${inline(m[1])}</li>`; continue; }
+    if (list) { html += '</ul>'; list = false; }
+    const h = l.match(/^#{1,4}\s+(.*)/);
+    if (h) html += `<h3>${inline(h[1])}</h3>`; else if (l.trim()) html += `<p>${inline(l)}</p>`;
+  }
+  return html + (list ? '</ul>' : '');
+}
+const sErr = e => ({ not_granted: 'Tu as refusé l’accès à Claude pour cette page.', rate_limited: 'Limite d’utilisation atteinte, réessaie plus tard.', session_expired: 'Reconnecte-toi à claude.ai.', cancelled: 'Arrêté.' })[e?.code] || 'Claude n’a pas pu répondre' + (e?.code ? ' (' + e.code + ')' : '') + '.';
+
+async function askAdvice() {
+  if (!sample) return queueQuestion('Donne-moi ton avis complet du mois sur mon portefeuille : en bref, ce que tu ferais ce mois-ci (montants et parts), points de vigilance, IPO et opportunités pour le CTO, questions à me poser.', 'advice');
+  if (asking) return;
+  asking = true; render();
+  const out = $('#advout'); if (out) out.textContent = 'Claude analyse ton portefeuille…';
+  const prompt = RULES + `\n\nDonne ton avis du mois en Markdown, avec exactement ces titres :\n## En bref (2 phrases)\n## Ce que je ferais ce mois-ci (montants et nombre de parts si un budget est indiqué)\n## Points de vigilance\n## IPO et opportunités pour le CTO (d’après le dernier brief ; dis s’il n’y a rien)\n## Questions à te poser\nReste sous 350 mots.\n\nMÉMOIRE (objectifs et décisions) : ` + JSON.stringify(memo) + `\n\nDONNÉES :\n` + context();
+  try {
+    const { text } = await sample(prompt, { cache: false, onText: ({ text }) => { const o = $('#advout'); if (o) o.innerHTML = md(text); } });
+    const doc = { date: today(), at: new Date().toISOString(), text };
+    advice = [doc, ...advice.filter(a => a.date !== doc.date)];
+    if (db) db.doc('advice/' + today()).set(doc).catch(() => {});
+  } catch (e) { const o = $('#advout'); if (o) o.innerHTML = (e.text ? md(e.text) : '') + `<p class="note">${esc(sErr(e))}</p>`; }
+  asking = false; render();
+}
+
+function parseMarkers(text) {
+  const memos = [], research = [];
+  const clean = String(text || '').replace(/\[\[(MEMO|RECHERCHE)\s*:\s*([\s\S]*?)\]\]/g, (_, k, v) => { (k === 'MEMO' ? memos : research).push(v.trim()); return ''; }).trim();
+  return { clean, memos, research };
+}
+async function saveChat() { if (db) { const msgs = chat.filter(m => m.content).slice(-40); try { await db.doc('agent/chat').set({ messages: msgs }); } catch { } } }
+async function saveMemo() { if (db) { try { await db.doc('agent/memory').set({ notes: memo.slice(-40), updatedAt: new Date().toISOString() }); } catch { } } }
+function agentPrompt() {
+  const answered = questions.filter(q => q.answer).slice(0, 5).map(q => ({ question: q.q, reponse: q.answer.slice(0, 1500), date: q.answeredAt }));
+  return RULES + `
+Tu es son agent conseiller personnel : tu suis son dossier dans la durée.
+- Ta mémoire (ses objectifs, décisions, préférences) est fournie ci-dessous. Quand il t'apprend quelque chose de durable (objectif, décision, contrainte, préférence), ajoute à la fin de ta réponse une ligne [[MEMO: le fait en une phrase]].
+- Pour les infos récentes (actualité, IPO, cours du jour, résultats d'entreprise, taux, fiscalité qui a pu changer), tu fais une recherche web : ajoute à la fin [[RECHERCHE: la question précise à rechercher]]. Commence alors ta réponse par « Je vérifie l'actualité et je reviens vers toi avec les sources dans l'heure. », puis donne seulement les repères utiles que tu connais déjà, présentés comme à confirmer. Ne dis jamais que tu n'as pas accès à internet ; n'écris jamais de liste d'IPO, de cours ou de dates récentes de mémoire.
+- Si une recherche déjà faite (ci-dessous) répond à la question, appuie-toi dessus au lieu d'en relancer une.
+- Réponds en moins de 200 mots sauf demande contraire, en Markdown simple.
+
+MÉMOIRE : ${JSON.stringify(memo)}
+RECHERCHES DÉJÀ FAITES : ${JSON.stringify(answered)}
+DONNÉES : ${context()}`;
+}
+async function queueQuestion(q, kind) {
+  if (!db || !q.trim()) return;
+  const at = new Date().toISOString(), id = Date.now().toString(36) + uid();
+  if (kind === 'chat') { chat.push({ role: 'user', content: q.trim(), at }); chat.push({ role: 'note', content: 'Question transmise à ton agent : il cherche, puis répond ici dans l’heure (8 h – 22 h), avec une notification.', at }); }
+  else chat.push({ role: 'note', content: 'Avis complet demandé : réponse ici dans l’heure (8 h – 22 h), avec une notification.', at });
+  render();
+  try { await db.doc('questions/' + id).set({ id, q: q.trim(), asked: q.trim(), kind, status: 'pending', at }); } catch { }
+  await saveChat(); render(); const box = $('#q'); if (box) box.focus();
+}
+async function askQuestion(q) {
+  if (!sample) return queueQuestion(q, 'chat');
+  if (asking || !q.trim()) return;
+  asking = true; chat.push({ role: 'user', content: q.trim(), at: new Date().toISOString() }); chat.push({ role: 'assistant', content: '', at: new Date().toISOString() }); render();
+  const hist = chat.slice(0, -1).filter(m => m.content && (m.role === 'user' || m.role === 'assistant')).slice(-12).map(m => ({ role: m.role, content: m.content }));
+  const turns = [{ role: 'user', content: agentPrompt() }, ...hist];
+  askCtl = new AbortController();
+  try {
+    const { text } = await sample(turns, { cache: false, signal: askCtl.signal, onText: ({ text }) => { const b = document.querySelector('.bubble.last'); if (b) b.innerHTML = md(parseMarkers(text).clean); } });
+    const p = parseMarkers(text);
+    chat.at(-1).content = p.clean || '…';
+    if (p.memos.length) { memo.push(...p.memos.map(t => ({ t, at: today() }))); await saveMemo(); }
+    for (const r of p.research) { const id = Date.now().toString(36) + uid(); try { await db.doc('questions/' + id).set({ id, q: r, asked: q.trim(), status: 'pending', at: new Date().toISOString() }); } catch { } }
+    if (p.research.length) chat.push({ role: 'note', content: `Recherche lancée : « ${p.research.join(' » ; « ')} ». Réponse sourcée dans ce fil dans l’heure (entre 8 h et 22 h), avec une notification.`, at: new Date().toISOString() });
+  } catch (e) { chat.at(-1).content = (e.text ? parseMarkers(e.text).clean + '\n\n' : '') + sErr(e); }
+  asking = false; await saveChat(); render(); const box = $('#q'); if (box) box.focus();
+}
+
+function timeline() {
+  const items = chat.map(m => ({ ...m, kind: 'chat' }));
+  for (const q of questions) if (q.answer) items.push({ role: 'research', kind: q.kind, content: q.answer, q: q.q, sources: q.sources || [], at: q.answeredAt || q.at });
+  return items.sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')));
+}
+function vAdv() {
+  const dg = diagnostics().map(d => `<li class="dg ${d.lvl}">${esc(d.t)}</li>`).join('');
+  const al = alerts.filter(a => !a.dismissed).slice(0, 5).map(a => `<li class="dg ${a.level === 'high' ? 'warn' : 'info'}"><b>${esc(a.title)}</b> — ${esc(a.text)} ${link(a.url, 'source')} <button type="button" class="x" data-dismiss="${esc(a.id)}">OK</button></li>`).join('');
+  const pend = questions.filter(q => !q.answer);
+  const tl = timeline(), lastIdx = tl.length - 1;
+  const bubbles = tl.map((m, i) => {
+    if (m.role === 'user') return `<div class="bubble user">${esc(m.content)}</div>`;
+    if (m.role === 'note') return `<div class="note" style="justify-self:center">${esc(m.content)}</div>`;
+    if (m.role === 'research') return `<div class="bubble research"><p class="note">${m.kind === 'chat' || m.kind === 'advice' ? 'Réponse de ton agent' : 'Recherche web : ' + esc(m.q)}</p>${md(m.content)}${m.sources.length ? '<p class="note">Sources : ' + m.sources.slice(0, 6).map(x => link(x.url, x.title || x.url)).filter(Boolean).join(' · ') + '</p>' : ''}</div>`;
+    return `<div class="bubble assistant${i === lastIdx ? ' last' : ''}">${m.content ? md(m.content) : '<p class="note">L’agent réfléchit…</p>'}</div>`;
+  }).join('');
+  const last = advice[0];
+  const mem = memo.map((m, i) => `<li>${esc(m.t)} <button type="button" class="x" data-forget="${i}" aria-label="Oublier">Oublier</button></li>`).join('');
+  return `<h2>Ton agent</h2><p class="sub">Il connaît ton portefeuille et ta stratégie, se souvient de vos échanges, lance des recherches web quand il le faut et te prévient de lui-même.${STANDALONE ? ' Ici, il répond dans l’heure (8 h – 22 h), avec une notification.' : ''}</p>
+  ${al ? `<h3>Alertes</h3><ul class="dgl">${al}</ul>` : ''}
+  ${sample || STANDALONE ? `<div class="chat">${bubbles || '<p class="note">Pose ta première question : objectif, prime à placer, IPO, doute sur la stratégie…</p>'}</div>
+  ${pend.length ? `<p class="note">${pend.length} recherche(s) web en cours…</p>` : ''}
+  <form id="fq" class="ask"><input id="q" placeholder="Ex. : je touche une prime de 500 €, je la mets où ?" autocomplete="off"${asking ? ' disabled' : ''}>${asking ? '<button type="button" class="ghost" id="stopask">Arrêter</button>' : '<button>Envoyer</button>'}</form>` : '<p class="warn">L’agent ne peut pas répondre ici. Ouvre l’appli depuis l’app Claude ou depuis claude.ai (onglet Artifacts ou lien épinglé), pas depuis un raccourci Safari ni un autre navigateur, puis autorise l’accès à Claude quand c’est demandé.</p>'}
+  <h3>Diagnostic</h3><ul class="dgl">${dg}</ul>
+  <h3>Avis du mois</h3>
+  ${sample || STANDALONE ? `<p><button type="button" id="askadv"${asking ? ' disabled' : ''}>${asking ? 'Patiente…' : 'Demander l’avis complet'}</button></p>` : ''}
+  <div id="advout" class="adv">${last ? md(last.text) + `<p class="note">Avis du ${esc(last.date)}.</p>` : '<p class="note">Aucun avis pour l’instant.</p>'}</div>
+  <details class="imp"><summary>Ce dont l’agent se souvient (${memo.length})</summary>${mem ? `<ul>${mem}</ul>` : '<p class="note">Rien pour l’instant.</p>'}</details>
+  <p class="note">Aide à la décision générée automatiquement, pas un conseil en investissement réglementé.</p>`;
+}
+
+let proj = null;
+function projDefaults() {
+  const pea = stats().rows.filter(r => r.a.account === 'PEA').reduce((s, r) => s + r.value, 0);
+  let saved = {}; try { saved = JSON.parse(localStorage.getItem('proj') || '{}'); } catch { }
+  return { start: Math.round(pea), monthly: Number(cfg.settings.monthlyBudget) || 150, years: 20, rate: 7, growth: 0, infl: 2, ...saved, startAuto: saved.start == null };
+}
+const SL = [
+  ['years', 'Durée', 1, 40, 1, v => v + (v > 1 ? ' ans' : ' an')],
+  ['monthly', 'Versement mensuel', 0, 1000, 10, v => fe0(v)],
+  ['start', 'Capital de départ', 0, 50000, 50, v => fe0(v)],
+  ['rate', 'Rendement annuel moyen', 0, 12, 0.5, v => pct(v)],
+  ['growth', 'Hausse des versements chaque année', 0, 10, 0.5, v => pct(v)],
+  ['infl', 'Inflation (pour la valeur en euros d’aujourd’hui)', 0, 5, 0.5, v => pct(v)],
+];
+function vProj() {
+  if (!proj) proj = projDefaults();
+  const sl = SL.map(([k, l, mn, mx, st, f]) => `<label class="sl"><span>${l}<b id="v-${k}">${esc(f(proj[k]))}</b></span><input type="range" data-pk="${k}" min="${mn}" max="${mx}" step="${st}" value="${proj[k]}"></label>`).join('');
+  return `<h2>Prévisionnel</h2><p class="sub">Combien ton PEA pourrait valoir selon ton effort d’épargne. Bouge les curseurs : tout se recalcule.</p>
+  <div class="projgrid"><div class="sliders">${sl}<div><span class="note">Hypothèse de rendement :</span><div class="presets"><button type="button" class="ghost" data-preset="5">Prudent 5 %</button><button type="button" class="ghost" data-preset="7.5">MSCI World 7,5 %</button><button type="button" class="ghost" data-preset="8">S&amp;P 500 8 %</button></div></div>
+  <p class="note">Repères historiques, dividendes réinvestis, en dollars : MSCI World ≈ 7,5 %/an de fin 2000 à mi-2026 ; S&amp;P 500 ≈ 8,1 %/an de 2000 à 2025, mais quasi nul de 2000 à 2010. Rien ne garantit l’avenir.</p></div>
+  <div><div id="pres" class="kpis"></div><div id="pfig" class="fig"></div><p class="note"><span style="color:var(--acc)">━</span> scénario central · zone : ±3 points de rendement · <span style="color:var(--mute)">┄</span> total versé</p><div id="pmil"></div></div></div>
+  <p class="note">Simulation indicative : rendement lissé, frais des ETF non déduits, fiscalité 2026 (prélèvements sociaux de 18,6 % sur les gains après 5 ans de PEA). Pas un conseil en investissement.</p>`;
+}
+let pro = null;
+function drawProj() {
+  const fig = $('#pfig'); if (!fig || !proj) return;
+  const p = { ...proj }, base = project(p), lo = project({ ...p, rate: Math.max(0, p.rate - 3) }), hi = project({ ...p, rate: p.rate + 3 });
+  const end = base.at(-1), gain = end.value - end.paid, od = cfg.settings.peaOpenDate, y0 = new Date().getFullYear();
+  const peaAge = od ? (y0 + p.years) - Number(od.slice(0, 4)) : p.years;
+  const tax = peaAge >= 5 ? 0.186 : 0.314, net = end.value - Math.max(0, gain) * tax, real = net / Math.pow(1 + p.infl / 100, p.years);
+  $('#pres').innerHTML = `<div class="key"><b>${fe0((end.value))}</b><span>dans ${p.years} an${p.years > 1 ? 's' : ''} (${y0 + p.years})</span></div>
+    <div class="kpi"><small>Total versé</small><strong>${fe0((end.paid))}</strong></div>
+    <div class="kpi"><small>Gains</small><strong class="pos">+${fe0((gain))}</strong></div>
+    <div class="kpi"><small>Net après ${peaAge >= 5 ? 'prélèvements sociaux (18,6 %)' : 'flat tax (31,4 %, PEA < 5 ans)'}</small><strong>${fe0((net))}</strong></div>
+    <div class="kpi"><small>En euros d’aujourd’hui</small><strong>${fe0((real))}</strong></div>
+    <div class="kpi"><small>Fourchette (±3 pts)</small><strong>${fe0((lo.at(-1).value))} – ${fe0((hi.at(-1).value))}</strong></div>`;
+  const mil = [];
+  const first = (pts, t) => pts.find(x => x.value >= t);
+  for (const t of [10000, 50000, 100000, 250000, 500000]) { const x = first(base, t); if (x && x.y > 0 && base[0].value < t) mil.push(`${fe0(t)} vers ${y0 + x.y}`); }
+  if (base.some(x => x.paid > 150000)) mil.push('attention : tes versements dépasseraient le plafond PEA de 150 000 €');
+  $('#pmil').innerHTML = mil.length ? `<p class="note">Étapes : ${esc(mil.join(' · '))}.</p>` : '';
+  fig.innerHTML = '<svg role="img" aria-label="Projection du capital dans le temps"></svg>';
+  const s = fig.firstChild;
+  const draw = () => {
+    const W = s.clientWidth, H = s.clientHeight, L = W < 520 ? 8 : 70, R = 12, T = 12, B = 28;
+    const maxV = Math.max(...hi.map(x => x.value)) * 1.05 || 1;
+    const X = y => L + y / (p.years || 1) * (W - L - R), Y = v => T + (1 - v / maxV) * (H - T - B);
+    const path = (pts, k) => pts.map((x, i) => (i ? 'L' : 'M') + X(x.y).toFixed(1) + ' ' + Y(x[k]).toFixed(1)).join('');
+    const band = hi.map((x, i) => (i ? 'L' : 'M') + X(x.y).toFixed(1) + ' ' + Y(x.value).toFixed(1)).join('') + [...lo].reverse().map(x => 'L' + X(x.y).toFixed(1) + ' ' + Y(x.value).toFixed(1)).join('') + 'Z';
+    const ticks = W < 520 ? '' : [0.25, 0.5, 0.75, 1].map(f => { const v = maxV * f / 1.05; return `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="12" fill="var(--mute)">${esc(Math.round(v / 1000).toLocaleString('fr-FR'))} k€</text>`; }).join('');
+    const yrs = [0, Math.round(p.years / 2), p.years].map(y => `<text x="${X(y)}" y="${H - 8}" text-anchor="${y === 0 ? 'start' : y === p.years ? 'end' : 'middle'}" font-size="12" fill="var(--mute)">${y0 + y}</text>`).join('');
+    const five = od && peaAge >= 5 && (Number(od.slice(0, 4)) + 5 - y0) > 0 && (Number(od.slice(0, 4)) + 5 - y0) < p.years ? (() => { const y = Number(od.slice(0, 4)) + 5 - y0; return `<line x1="${X(y)}" x2="${X(y)}" y1="${T}" y2="${H - B}" stroke="var(--mute)" stroke-dasharray="3 3"/><text x="${X(y) + 4}" y="${T + 12}" font-size="12" fill="var(--mute)">PEA 5 ans</text>`; })() : '';
+    s.innerHTML = `${ticks}<path d="${band}" fill="var(--acc)" opacity="0.12"/>${five}<path d="${path(base, 'paid')}" fill="none" stroke="var(--mute)" stroke-width="1.5" stroke-dasharray="4 4"/><path d="${path(base, 'value')}" fill="none" stroke="var(--acc)" stroke-width="2.5"/>${yrs}`;
+  };
+  if (pro) pro.disconnect(); pro = new ResizeObserver(draw); pro.observe(s);
+}
+
+function vSet() {
+  const sumW = cfg.classes.reduce((s, c) => s + (Number(c.target) || 0), 0);
+  const cl = cfg.classes.map(c => `<tr><td><input data-cn="${esc(c.id)}" value="${esc(c.name)}" aria-label="Nom de la classe"></td><td class="n"><input class="sm" data-ct="${esc(c.id)}" type="number" step="any" min="0" max="100" value="${esc(c.target)}" aria-label="Poids cible"></td><td><button class="x" data-delc="${esc(c.id)}">Supprimer</button></td></tr>`).join('');
+  const copts = cfg.classes.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  const al = cfg.assets.map(a => `<tr><td><b>${esc(a.name)}</b><br><small style="color:var(--mute)">${esc(a.isin)} ${a.ticker ? '· ' + esc(a.ticker) : ''}</small></td><td><select data-ac="${esc(a.id)}" aria-label="Classe">${cfg.classes.map(c => `<option value="${esc(c.id)}"${c.id === a.classId ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select></td><td>${esc(a.account)}</td><td><button class="x" data-dela="${esc(a.id)}">Supprimer</button></td></tr>`).join('');
+  const s = cfg.settings;
+  return `<h2>Réglages</h2>
+  <h3>Répartition cible</h3><p class="sub">Une classe regroupe des actifs interchangeables (ex. « Monde », « Émergents »). Total actuel : <b class="${Math.abs(sumW - 100) < 0.01 ? 'pos' : 'neg'}">${pct(sumW)}</b>.</p>
+  ${cfg.classes.length ? `<table><thead><tr><th>Classe</th><th class="n">Cible (%)</th><th></th></tr></thead><tbody>${cl}</tbody></table>` : ''}
+  <form class="form" id="fc"><label>Nouvelle classe<input id="cn" required placeholder="Monde"></label><label>Cible (%)<input id="ct" type="number" step="any" min="0" max="100" required></label><button>Ajouter</button></form>
+  <h3>Actifs</h3><p class="sub">Renseigne l’ISIN : c’est lui qui sert à retrouver le cours chaque semaine. Dans chaque classe, le calcul choisit d’abord un actif sur le PEA, puis sur le CTO si le plafond est atteint ou s’il n’y a pas d’actif PEA.</p>
+  ${cfg.assets.length ? `<div class="scroll"><table class="stack"><thead><tr><th>Actif</th><th>Classe</th><th>Compte</th><th></th></tr></thead><tbody>${al}</tbody></table></div>` : ''}
+  ${cfg.classes.length ? `<form class="form" id="fa"><label>Nom<input id="an" required placeholder="Amundi MSCI World"></label><label>ISIN<input id="ai" placeholder="FR0011869353"></label><label>Ticker<input id="at" placeholder="CW8"></label><label>Classe<select id="acl">${copts}</select></label><label>Compte<select id="aac"><option>PEA</option><option>CTO</option></select></label><label>Cours actuel (€)<input id="ap" type="number" step="any" min="0"></label><label>Frais annuels TER (%)<input id="ater" type="number" step="any" min="0" placeholder="0,20"></label><button>Ajouter</button></form>` : '<p class="note">Crée d’abord une classe.</p>'}
+  <h3>Paramètres</h3>
+  <form class="form" id="fs"><label>Budget mensuel habituel (€)<input id="smb" type="number" min="0" step="any" value="${esc(s.monthlyBudget || '')}"></label><label>Date d’ouverture du PEA<input id="spo" type="date" value="${esc(s.peaOpenDate || '')}"></label><label style="grid-column:1/-1">Ta stratégie, en une ou deux phrases (lue par le conseiller)<input id="sst" value="${esc(s.strategy || '')}" placeholder="PEA : achat mensuel MSCI World. CTO : réservé aux IPO."></label><label>Montant minimum par ligne (€)<input id="sm" type="number" min="0" step="any" value="${esc(s.minLine)}"></label><label>Plafond de versements PEA (€)<input id="sp" type="number" min="0" step="any" value="${esc(s.peaCap)}"></label><label>Fractions de parts sur le PEA<select id="sfp"><option value="0"${s.fracPEA ? '' : ' selected'}>Non</option><option value="1"${s.fracPEA ? ' selected' : ''}>Oui</option></select></label><label>Fractions de parts sur le CTO<select id="sfc"><option value="0"${s.fracCTO ? '' : ' selected'}>Non</option><option value="1"${s.fracCTO ? ' selected' : ''}>Oui</option></select></label><button>Enregistrer</button></form>
+  ${STANDALONE ? '<p><button type="button" class="ghost" id="logout">Se déconnecter</button></p>' : ''}
+  <p class="note">Outil personnel d’aide au calcul, pas un conseil en investissement.</p>`;
+}
+
+const num = id => Number($(id).value);
+document.addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target.id;
+  if (f === 'fq') { const q = $('#q').value; askQuestion(q); return; }
+  if (f === 'fb') { budget = $('#bud').value; plan = computePlan(cfg, txs, budget); render(); }
+  if (f === 'fc') { cfg.classes.push({ id: uid(), name: $('#cn').value.trim(), target: num('#ct') }); saveCfg(); render(); }
+  if (f === 'fa') { cfg.assets.push({ id: uid(), name: $('#an').value.trim(), isin: $('#ai').value.trim(), ticker: $('#at').value.trim(), classId: $('#acl').value, account: $('#aac').value, ter: $('#ater').value ? num('#ater') : null, price: $('#ap').value ? num('#ap') : null, priceDate: $('#ap').value ? today() : null }); saveCfg(); render(); }
+  if (f === 'fs') { cfg.settings = { ...cfg.settings, monthlyBudget: num('#smb') || 0, peaOpenDate: $('#spo').value, strategy: $('#sst').value.trim(), minLine: num('#sm'), peaCap: num('#sp'), fracPEA: $('#sfp').value === '1', fracCTO: $('#sfc').value === '1' }; setStatus('Réglages enregistrés'); saveCfg(); render(); }
+  if (f === 'ft') { await addTx({ date: $('#td').value, assetId: $('#ta').value, side: $('#ts').value, qty: num('#tq'), price: num('#tp'), fees: num('#tf') || 0 }); }
+  if (f === 'fv' && plan) {
+    const d = $('#vd').value || today(), fees = num('#vf') || 0;
+    for (const l of plan.lines) if (l.qty > 0) await addTx({ date: d, assetId: l.assetId, side: 'achat', qty: l.qty, price: l.price, fees });
+    plan = null; budget = ''; setStatus('Achats enregistrés'); location.hash = '#tableau'; render();
+  }
+});
+
+async function addTx(t) {
+  if (!db) return;
+  const id = uid(); t.id = id;
+  try { await db.collection('tx').doc(id).set(t); setStatus('Transaction ajoutée'); } catch (e) { setStatus('Erreur : ' + (e?.code || '')); }
+}
+
+document.addEventListener('input', e => {
+  const k = e.target.dataset?.pk; if (!k || !proj) return;
+  proj[k] = Number(e.target.value); if (k === 'start') proj.startAuto = false;
+  const f = SL.find(x => x[0] === k); $('#v-' + k).textContent = f[5](proj[k]);
+  try { const { startAuto, ...keep } = proj; if (startAuto) delete keep.start; localStorage.setItem('proj', JSON.stringify(keep)); } catch { }
+  drawProj();
+});
+document.addEventListener('change', e => {
+  const t = e.target, d = t.dataset;
+  if (t.id === 'iacc') { imp.account = t.value; imp.ops = null; return; }
+  if (t.id === 'ifile') { readCapture(t.files); return; }
+  if (d.iop && imp.ops) { imp.ops[d.iop].off = !t.checked; return; }
+  if (d.icls && imp.ops) { imp.ops[d.icls].classId = t.value; return; }
+  if (d.price) { const a = cfg.assets.find(x => x.id === d.price); if (a) { a.price = t.value === '' ? null : Number(t.value); a.priceDate = today(); saveCfg(); if (a.price > 0 && db) db.doc('prices/' + a.id).set({ h: { ...(prices[a.id] || {}), [today()]: a.price } }).catch(() => {}); render(); } }
+  if (d.cn) { const c = cfg.classes.find(x => x.id === d.cn); if (c) { c.name = t.value.trim(); saveCfg(); render(); } }
+  if (d.ct) { const c = cfg.classes.find(x => x.id === d.ct); if (c) { c.target = Number(t.value); saveCfg(); render(); } }
+  if (d.ac) { const a = cfg.assets.find(x => x.id === d.ac); if (a) { a.classId = t.value; saveCfg(); } }
+  if (d.pq && plan) { plan.lines[d.pq].qty = Number(t.value) || 0; render(); }
+  if (d.pp && plan) { plan.lines[d.pp].price = Number(t.value) || 0; render(); }
+});
+
+const pending = {};
+document.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'askadv') { askAdvice(); return; }
+  if (b.id === 'stopask') { askCtl?.abort(); return; }
+  if (b.id === 'logout' && sbClient) { await sbClient.auth.signOut(); location.reload(); return; }
+  if (b.dataset.preset && proj) { proj.rate = Number(b.dataset.preset); const i = document.querySelector('[data-pk="rate"]'); if (i) i.value = proj.rate; $('#v-rate').textContent = pct(proj.rate); try { const { startAuto, ...keep } = proj; if (startAuto) delete keep.start; localStorage.setItem('proj', JSON.stringify(keep)); } catch { } drawProj(); return; }
+  if (b.dataset.forget != null) { memo.splice(Number(b.dataset.forget), 1); saveMemo(); render(); return; }
+  if (b.dataset.dismiss) { alerts = alerts.map(a => a.id === b.dataset.dismiss ? { ...a, dismissed: true } : a); db && db.doc('alerts/' + b.dataset.dismiss).update({ dismissed: true }).catch(() => {}); render(); return; }
+  if (b.id === 'iapply') { b.disabled = true; applyImport(); return; }
+  if (b.id === 'icancel') { imp.ops = null; imp.msg = ''; render(); return; }
+  const d = b.dataset; const key = d.delc || d.dela || d.deltx; if (!key) return;
+  if (pending[key] !== true) { pending[key] = true; b.textContent = 'Confirmer ?'; setTimeout(() => { if (pending[key]) { delete pending[key]; b.textContent = 'Supprimer'; } }, 3000); return; }
+  delete pending[key];
+  if (d.delc) { cfg.classes = cfg.classes.filter(c => c.id !== d.delc); saveCfg(); render(); }
+  if (d.dela) { cfg.assets = cfg.assets.filter(a => a.id !== d.dela); saveCfg(); render(); }
+  if (d.deltx) { try { await db.collection('tx').doc(d.deltx).delete(); } catch (err) { setStatus('Erreur : ' + (err?.code || '')); } }
+});
+
+window.addEventListener('hashchange', render);
+render();
+
+(async () => {
+  const timer = setTimeout(() => { if (!ready) setStatus('Données injoignables pour le moment.'); }, 10000);
+  if (!STANDALONE) claude.use('sample').then(sm => { sample = sm; if (['conseiller', 'portefeuille'].includes(route())) render(); });
+  db = STANDALONE ? await standaloneDb() : await claude.use('db');
+  if (!db) { clearTimeout(timer); ready = true; setStatus(STANDALONE ? 'Données injoignables.' : 'Sauvegarde indisponible : connecte-toi à claude.ai.'); render(); return; }
+  let gotCfg = false, gotTx = false;
+  const done = () => { if (gotCfg && gotTx && !ready) { ready = true; clearTimeout(timer); setStatus('À jour'); } render(); };
+  db.doc('pf/config').onSnapshot(s => {
+    if (s.metadata.hasPendingWrites && gotCfg) return;
+    const d = s.exists ? s.data() : null;
+    cfg = d ? { ...structuredClone(DEFAULT), ...JSON.parse(JSON.stringify(d)) } : structuredClone(DEFAULT);
+    cfg.settings = { ...DEFAULT.settings, ...(cfg.settings || {}) };
+    gotCfg = true; if (document.activeElement?.tagName !== 'INPUT') done(); else if (!ready) done();
+  }, err => { clearTimeout(timer); setStatus('Erreur : ' + err.code); });
+  db.collection('prices').onSnapshot(s => { prices = {}; for (const x of s.docs) prices[x.id] = (x.data() || {}).h || {}; if (route() === 'tableau' && ready) drawHisto(); }, () => {});
+  db.doc('agent/chat').onSnapshot(s => { if (asking || s.metadata.hasPendingWrites) return; chat = (s.exists && s.data().messages) || []; chatLoaded = true; if (route() === 'conseiller') render(); }, () => {});
+  db.doc('agent/memory').onSnapshot(s => { if (s.metadata.hasPendingWrites) return; memo = (s.exists && s.data().notes) || []; }, () => {});
+  db.collection('questions').orderBy('at', 'desc').limit(30).onSnapshot(s => { questions = s.docs.map(x => x.data()); if (route() === 'conseiller' && !asking) render(); }, () => {});
+  db.collection('alerts').orderBy('date', 'desc').limit(20).onSnapshot(s => { alerts = s.docs.map(x => ({ ...x.data(), id: x.id })); if (['conseiller', 'tableau'].includes(route()) && !asking) render(); }, () => {});
+  db.collection('advice').orderBy('date', 'desc').limit(6).onSnapshot(s => { if (asking) return; advice = s.docs.map(x => x.data()); if (route() === 'conseiller') render(); }, () => {});
+  db.collection('briefs').orderBy('date', 'desc').limit(12).onSnapshot(s => { briefs = s.docs.map(x => x.data()); if (route() === 'veille') render(); }, () => {});
+  db.collection('tx').onSnapshot(s => { txs = s.docs.map(x => ({ ...x.data(), id: x.id })); gotTx = true; done(); }, err => { clearTimeout(timer); setStatus('Erreur : ' + err.code); });
+})();
+}
+</script>
+</body>
+</html>
